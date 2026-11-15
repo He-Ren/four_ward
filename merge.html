@@ -7,14 +7,11 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="theme-color" content="#f7f5ee" />
-    <meta
-      name="description"
-      content="找个位置，轻轻放下。一个会弹一弹的合成小游戏。"
-    />
+    <meta name="description" content="一个会弹一弹的合成小游戏。" />
     <title>合成五哥</title>
     <link rel="icon" href="assets/stickers/sticker_logo.png" type="image/png" />
-    <link rel="stylesheet" href="src/merge/styles.css?v=loading-dots-1" />
-    <script defer src="src/merge/boot.js?v=loading-dots-1"></script>
+    <link rel="stylesheet" href="src/merge/styles.css?v=redhood-pause-1" />
+    <script defer src="src/merge/boot.js?v=redhood-pause-1"></script>
   </head>
   <body data-state="loading">
     <div class="app">
@@ -35,7 +32,6 @@
       </header>
       <div class="heading">
         <h1>合成五哥</h1>
-        <p class="subtitle">找个位置，轻轻放下。</p>
       </div>
       <main class="game-layout">
         <aside class="left-panel">
@@ -58,7 +54,15 @@
                   class="overlay-icon"
                   aria-hidden="true"
                 ></span>
-                <h2 id="overlay-title">小红帽赶路中……</h2>
+                <img
+                  id="pause-image"
+                  class="pause-image"
+                  src="assets/stickers/form1.png"
+                  alt="小红帽"
+                  loading="lazy"
+                  hidden
+                />
+                <h2 id="overlay-title">小红帽赶路中</h2>
                 <p id="overlay-message">正在加载美术资源</p>
                 <button id="overlay-action" type="button" hidden>
                   再玩一次

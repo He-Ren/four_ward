@@ -2039,6 +2039,7 @@ const overlay = element("overlay"),
   message = element("overlay-message"),
   icon = element("overlay-icon");
 const action = /** @type {HTMLButtonElement} */ (element("overlay-action"));
+const pauseImage = element("pause-image");
 const pauseButton = /** @type {HTMLButtonElement} */ (element("pause"));
 const restartButton = /** @type {HTMLButtonElement} */ (element("restart"));
 const rewardDialog = /** @type {HTMLDialogElement} */ (
@@ -2113,6 +2114,8 @@ async function start() {
     nextImage.alt = `下一个：第 ${game.next + 1} 阶`;
     pauseButton.textContent = paused ? "继续" : "暂停";
     pauseButton.disabled = game.state !== "playing";
+    pauseImage.hidden = !(paused && game.state === "playing");
+    icon.hidden = !pauseImage.hidden;
     if (game.state === "won") {
       overlay.hidden = true;
       status.textContent = "合成成功，请向工作人员展示本页领奖";
@@ -2127,9 +2130,8 @@ async function start() {
       overlay.hidden = false;
       action.hidden = false;
       if (paused && game.state === "playing") {
-        icon.textContent = "Ⅱ";
-        title.textContent = "歇一小会儿";
-        message.textContent = "准备好后，继续让它们相遇。";
+        title.textContent = "小红帽开小差中";
+        message.textContent = "游戏已暂停";
         action.textContent = "继续游戏";
         status.textContent = "游戏已暂停";
       } else {
@@ -2255,6 +2257,8 @@ async function start() {
 function showError(error) {
   console.error(error);
   overlay.hidden = false;
+  pauseImage.hidden = true;
+  icon.hidden = false;
   icon.textContent = "!";
   title.textContent = "暂时没能开始";
   message.textContent =
