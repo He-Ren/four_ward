@@ -17,12 +17,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-#import-skin,
-#sound-preview {
-  flex-shrink: 0;
-  padding: 4px 7px;
-  font-size: 10px;
-}
+
 * {
   box-sizing: border-box;
 }
@@ -221,20 +216,12 @@ h2 {
   font-weight: 500;
   margin: 12px 0;
 }
-.instructions p,
-.evolution p,
-.tip p {
+.evolution p {
   font-size: 11px;
   line-height: 1.9;
   color: var(--muted);
 }
-.input-help {
-  margin-top: 22px;
-}
-.keyboard-hint {
-  font-size: 9px;
-  color: var(--muted);
-}
+
 .next-card {
   display: flex;
   align-items: center;
@@ -281,20 +268,7 @@ h2 {
   outline-offset: 4px;
   border-radius: 50%;
 }
-.tip {
-  display: flex;
-  gap: 12px;
-  margin-top: auto;
-  border-top: 1px solid var(--line);
-  padding-top: 14px;
-}
-.tip > span {
-  font-size: 28px;
-  color: #81966c;
-}
-.tip p {
-  margin: 0;
-}
+
 footer {
   display: flex;
   align-items: center;
@@ -309,9 +283,7 @@ footer {
   border-radius: 50%;
   background: #849e72;
 }
-.footer-note {
-  margin-left: auto;
-}
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -394,9 +366,7 @@ footer {
     gap: 12px;
     padding-top: 15px;
   }
-  .heading .eyebrow {
-    display: none;
-  }
+
   .heading h1 {
     font-size: 25px;
   }
@@ -408,12 +378,7 @@ footer {
     gap: 16px;
     padding-top: 8px;
   }
-  .instructions p {
-    margin: 8px 0;
-  }
-  .tip {
-    display: none;
-  }
+
   .score-card strong {
     font-size: 48px;
   }
@@ -480,9 +445,7 @@ footer {
     padding: 0;
     display: block;
   }
-  .instructions,
-  .evolution,
-  .tip {
+  .evolution {
     display: none;
   }
   .score-card {
@@ -536,9 +499,7 @@ footer {
   .board {
     border-radius: 13px 13px 24px 24px;
   }
-  .footer-note {
-    display: none;
-  }
+
   footer {
     justify-content: center;
     font-size: 9px;
@@ -576,9 +537,7 @@ footer {
   .heading {
     display: none;
   }
-  .instructions,
-  .evolution,
-  .tip {
+  .evolution {
     display: none;
   }
   .left-panel,

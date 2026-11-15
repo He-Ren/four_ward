@@ -13,8 +13,8 @@
     />
     <title>合成五哥</title>
     <link rel="icon" href="assets/stickers/sticker_logo.png" type="image/png" />
-    <link rel="stylesheet" href="src/merge/styles.css?v=mobile-audio-1" />
-    <script defer src="src/merge/boot.js?v=mobile-audio-1"></script>
+    <link rel="stylesheet" href="src/merge/styles.css?v=clean-ui-1" />
+    <script defer src="src/merge/boot.js?v=clean-ui-1"></script>
   </head>
   <body>
     <div class="app">
@@ -34,7 +34,6 @@
         </div>
       </header>
       <div class="heading">
-        <p class="eyebrow">从一小步，到一个惊喜</p>
         <h1>合成五哥</h1>
         <p class="subtitle">找个位置，轻轻放下。</p>
       </div>
@@ -43,15 +42,6 @@
           <div class="score-card">
             <span class="label">本局得分</span><strong id="score">0</strong>
             <div class="best">个人最佳 <span id="best">0</span></div>
-          </div>
-          <div class="instructions">
-            <span class="section-number">01 / 玩法说明</span>
-            <h2>碰在一起，<br />长大一点。</h2>
-            <p>相同图形相碰就会合成，<br />合成第九阶即可领取奖励。</p>
-            <p class="input-help">
-              移动鼠标瞄准，点击放下。<br />手机上拖动瞄准，松手放下。
-            </p>
-            <span class="keyboard-hint">← → 瞄准 · 空格放下</span>
           </div>
         </aside>
         <section class="arena-slot" aria-label="合成游戏">
@@ -84,37 +74,11 @@
             <ol id="progression"></ol>
             <p>合成第九阶，向工作人员展示领奖。</p>
           </div>
-          <div class="tip">
-            <span aria-hidden="true">✳</span>
-            <p>给它一点空间，<br />也给惊喜一点时间。</p>
-          </div>
         </aside>
       </main>
       <footer>
         <span class="live-dot" aria-hidden="true"></span
-        ><span id="status" aria-live="polite">正在准备…</span
-        ><span class="footer-note">慢一点，也没关系。</span>
-        <button
-          id="sound-preview"
-          type="button"
-          title="开启或试听音效；iPhone 请关闭静音模式"
-        >
-          试听音效
-        </button>
-        <button
-          id="import-skin"
-          type="button"
-          title="选择皮肤 JSON 和对应 PNG，可同时多选"
-        >
-          导入皮肤
-        </button>
-        <input
-          id="skin-files"
-          type="file"
-          accept=".json,.png,application/json,image/png"
-          multiple
-          hidden
-        />
+        ><span id="status" aria-live="polite">正在准备…</span>
       </footer>
     </div>
     <dialog

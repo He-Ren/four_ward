@@ -1,5 +1,5 @@
 // @ts-check
-import { loadSkin, loadLocalSkin } from "./config.js";
+import { loadSkin } from "./config.js";
 import { loadSprites } from "./assets.js";
 import { MergeWorld } from "./physics.js";
 import { Renderer } from "./renderer.js";
@@ -29,32 +29,15 @@ const rewardRestart = /** @type {HTMLButtonElement} */ (
 
 let dispose = () => {};
 const sound = new MergeAudio();
-const soundPreview = /** @type {HTMLButtonElement} */ (
-  element("sound-preview")
-);
-soundPreview.onclick = async () => {
-  soundPreview.disabled = true;
-  try {
-    const played = await sound.preview();
-    const status = element("status");
-    status.textContent = played
-      ? "已试听；iPhone 请关闭静音模式并调高音量"
-      : "音效尚未就绪，请稍后再点试听";
-    status.title = status.textContent;
-  } finally {
-    soundPreview.disabled = false;
-  }
-};
 window.addEventListener("pagehide", (event) => {
   if (!event.persisted) sound.destroy();
 });
 
-/** @param {import('./types.js').Skin} [selectedSkin] */
-async function start(selectedSkin) {
+async function start() {
   const query = new URLSearchParams(location.search);
-  const config =
-    selectedSkin ||
-    (await loadSkin(query.get("skin") || "./config/merge/default.json"));
+  const config = await loadSkin(
+    query.get("skin") || "./config/merge/default.json",
+  );
   const sprites = await loadSprites(config);
   dispose();
   sound.stop();
@@ -261,23 +244,4 @@ function showError(error) {
   element("status").textContent = "资源加载失败";
 }
 
-const importButton = /** @type {HTMLButtonElement} */ (element("import-skin"));
-const fileInput = /** @type {HTMLInputElement} */ (element("skin-files"));
-importButton.onclick = () => fileInput.click();
-fileInput.addEventListener("change", async () => {
-  const files = Array.from(fileInput.files || []);
-  if (!files.length) return;
-  importButton.disabled = true;
-  try {
-    const skin = await loadLocalSkin(files);
-    await start(skin);
-  } catch (error) {
-    // Invalid imports leave the current game intact for retry.
-    element("status").textContent =
-      error instanceof Error ? error.message : "皮肤导入失败";
-  } finally {
-    importButton.disabled = false;
-    fileInput.value = "";
-  }
-});
 start().catch(showError);

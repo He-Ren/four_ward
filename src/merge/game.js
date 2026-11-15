@@ -337,7 +337,7 @@ function validateSkin(input) {
 async function loadSkin(url) {
   if (location.protocol === "file:") {
     if (url !== "./config/merge/default.json")
-      throw new Error("双击模式请使用“导入皮肤”选择 JSON 和 PNG 文件。");
+      throw new Error("双击模式仅使用默认配置，请修改 JSON 后重新打包。");
     const offline = Reflect.get(window, "MergeOffline");
     if (!offline) throw new Error("缺少离线皮肤数据，请保留完整的游戏文件夹。");
     const config = validateSkin(structuredClone(offline.skin));
@@ -355,53 +355,6 @@ async function loadSkin(url) {
     ...item,
     image: new URL(item.image, absolute).href,
   }));
-  return config;
-}
-
-/** Read selected files without a server. @param {File[]} files @returns {Promise<Skin>} */
-async function loadLocalSkin(files) {
-  const jsonFiles = files.filter((file) =>
-    file.name.toLowerCase().endsWith(".json"),
-  );
-  if (jsonFiles.length !== 1)
-    throw new Error("请选择一个皮肤 JSON，以及它使用的 PNG 图片（可多选）。");
-  const config = validateSkin(JSON.parse(await jsonFiles[0].text()));
-  const offline = Reflect.get(window, "MergeOffline");
-  /** @type {Map<string, string>} */
-  const images = new Map();
-  for (const [name, data] of Object.entries(offline?.images || {}))
-    images.set(name.split("/").pop() || name, /** @type {string} */ (data));
-  // Online play no longer downloads the offline bundle. Keep JSON-only imports
-  // working by resolving the shipped skin's images to their normal URLs.
-  if (!offline && location.protocol !== "file:") {
-    const defaults = await loadSkin("./config/merge/default.json");
-    for (const item of defaults.items) {
-      const name = new URL(item.image).pathname.split("/").pop() || "";
-      images.set(decodeURIComponent(name), item.image);
-    }
-  }
-  const selectedNames = new Set();
-  for (const file of files.filter((file) =>
-    file.name.toLowerCase().endsWith(".png"),
-  )) {
-    if (selectedNames.has(file.name))
-      throw new Error(`图片文件名重复：${file.name}`);
-    selectedNames.add(file.name);
-    const data = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error(`无法读取 ${file.name}`));
-      reader.readAsDataURL(file);
-    });
-    images.set(file.name, data);
-  }
-  config.items = config.items.map((item) => {
-    const name = item.image.replaceAll("\\", "/").split("/").pop() || "";
-    const image = images.get(name);
-    if (!image)
-      throw new Error(`缺少 ${name}：请同时选择 JSON 和所需 PNG 文件。`);
-    return { ...item, image };
-  });
   return config;
 }
 
@@ -432,7 +385,7 @@ function chooseNextLevel(config, random = Math.random, avoid) {
   return chooseLevel(config, random);
 }
 
-return {validateSkin, loadSkin, loadLocalSkin, chooseLevel, chooseNextLevel};
+return {validateSkin, loadSkin, chooseLevel, chooseNextLevel};
 })();
 
 // ---- geometry.js ----
@@ -1737,7 +1690,6 @@ const AUDIO = {
   onsetPaddingSeconds: 0.004,
   fadeInSeconds: 0.002,
   retryCooldownMs: 3000,
-  previewWaitMs: 1500,
 };
 const CENTS_PER_SEMITONE = 100;
 
@@ -2055,38 +2007,6 @@ class MergeAudio {
     this.voices.clear();
   }
 
-  /** Explicit tap target for Safari, including recovery after a network error. */
-  async preview() {
-    this.retryAfter.fill(0);
-    this.unlock(); // Must stay synchronous with the trusted click.
-    const generation = this.playbackGeneration;
-    let timer = 0;
-    try {
-      await Promise.race([
-        Promise.all([this.ready, this.resuming]),
-        new Promise((resolve) => {
-          timer = window.setTimeout(resolve, AUDIO.previewWaitMs);
-        }),
-      ]);
-      if (
-        this.disposed ||
-        document.hidden ||
-        generation !== this.playbackGeneration ||
-        this.context?.state !== "running" ||
-        !this.buffers.some(
-          (buffer, i) => buffer && this.clips[i].type === "drop",
-        )
-      )
-        return false;
-      this.onEvent({ type: "drop", x: 0, y: 0, level: 0, strength: 1 });
-      return true;
-    } catch {
-      return false;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
   destroy() {
     this.disposed = true;
     this.listeners.abort();
@@ -2101,7 +2021,7 @@ return {trimLeadingSilence, normalizeLoudness, MergeAudio};
 // ---- main.js ----
 modules["main"] = (() => {
 // @ts-check
-const { loadSkin, loadLocalSkin } = modules["config"];
+const { loadSkin } = modules["config"];
 const { loadSprites } = modules["assets"];
 const { MergeWorld } = modules["physics"];
 const { Renderer } = modules["renderer"];
@@ -2131,32 +2051,15 @@ const rewardRestart = /** @type {HTMLButtonElement} */ (
 
 let dispose = () => {};
 const sound = new MergeAudio();
-const soundPreview = /** @type {HTMLButtonElement} */ (
-  element("sound-preview")
-);
-soundPreview.onclick = async () => {
-  soundPreview.disabled = true;
-  try {
-    const played = await sound.preview();
-    const status = element("status");
-    status.textContent = played
-      ? "已试听；iPhone 请关闭静音模式并调高音量"
-      : "音效尚未就绪，请稍后再点试听";
-    status.title = status.textContent;
-  } finally {
-    soundPreview.disabled = false;
-  }
-};
 window.addEventListener("pagehide", (event) => {
   if (!event.persisted) sound.destroy();
 });
 
-/** @param {import('./types.js').Skin} [selectedSkin] */
-async function start(selectedSkin) {
+async function start() {
   const query = new URLSearchParams(location.search);
-  const config =
-    selectedSkin ||
-    (await loadSkin(query.get("skin") || "./config/merge/default.json"));
+  const config = await loadSkin(
+    query.get("skin") || "./config/merge/default.json",
+  );
   const sprites = await loadSprites(config);
   dispose();
   sound.stop();
@@ -2363,25 +2266,6 @@ function showError(error) {
   element("status").textContent = "资源加载失败";
 }
 
-const importButton = /** @type {HTMLButtonElement} */ (element("import-skin"));
-const fileInput = /** @type {HTMLInputElement} */ (element("skin-files"));
-importButton.onclick = () => fileInput.click();
-fileInput.addEventListener("change", async () => {
-  const files = Array.from(fileInput.files || []);
-  if (!files.length) return;
-  importButton.disabled = true;
-  try {
-    const skin = await loadLocalSkin(files);
-    await start(skin);
-  } catch (error) {
-    // Invalid imports leave the current game intact for retry.
-    element("status").textContent =
-      error instanceof Error ? error.message : "皮肤导入失败";
-  } finally {
-    importButton.disabled = false;
-    fileInput.value = "";
-  }
-});
 start().catch(showError);
 
 return {};

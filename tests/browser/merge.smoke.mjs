@@ -67,35 +67,13 @@ try {
         0,
       );
 
-      // Import uses embedded PNGs when only the shipped JSON is selected.
-      const imported = { ...skin, name: "离线导入验证" };
-      await page.locator("#skin-files").setInputFiles({
-        name: "skin.json",
-        mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify(imported)),
-      });
-      await page.waitForFunction(
-        () => window.__merge.config.name === "离线导入验证",
-      );
-      const oldGame = await page.evaluate(() => {
-        window.__smokeGame = window.__merge.game;
-        return window.__merge.config.name;
-      });
-      await page.locator("#skin-files").setInputFiles({
-        name: "invalid.json",
-        mimeType: "application/json",
-        buffer: Buffer.from("{}"),
-      });
-      await page.waitForFunction(
-        () => !document.querySelector("#import-skin").disabled,
-      );
       assert.equal(
-        await page.evaluate(() => window.__smokeGame === window.__merge.game),
-        true,
-      );
-      assert.equal(
-        await page.evaluate(() => window.__merge.config.name),
-        oldGame,
+        await page
+          .locator(
+            "#sound-preview, #import-skin, #skin-files, .instructions, .tip, .footer-note",
+          )
+          .count(),
+        0,
       );
 
       // Drive the actual merge transaction without timers or browser frame races.
@@ -138,7 +116,7 @@ try {
       assert.deepEqual(errors, []);
       assert.deepEqual(network, []);
       console.log(
-        `${mobile ? "Mobile touch" : "Desktop keyboard"}: offline load, audio, drop, pause, restart, import, reward passed`,
+        `${mobile ? "Mobile touch" : "Desktop keyboard"}: offline load, audio, drop, pause, restart, simplified UI, reward passed`,
       );
     } finally {
       await context.close();

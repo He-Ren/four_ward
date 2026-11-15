@@ -4,7 +4,7 @@
 
 ## 运行
 
-主页为 `index.html`，包含游戏介绍、操作说明和进入 `merge.html` 的链接；样式在 `src/home/styles.css`。直接双击主页即可浏览，也可以从游戏左上角的 4Ward 标识返回主页。
+主页为 `index.html`，包含游戏介绍和进入 `merge.html` 的链接；样式在 `src/home/styles.css`。直接双击主页即可浏览，也可以从游戏左上角的 4Ward 标识返回主页。
 
 **直接双击 `merge.html`。** 请保留整个文件夹结构，不要只复制 HTML。
 
@@ -18,7 +18,7 @@
 
 配置、音频和图片加载最多自动尝试 3 次，每次超时 15 秒，重试分别等待 350 / 700 毫秒；图片逐张加载和处理，并及时释放临时 Canvas，降低手机内存峰值。图片使用加载完成事件，不依赖可能拒绝的 decode() Promise。最终失败会保留重试提示；不改变图片像素或碰撞轮廓精度。
 
-音频在 pointerup、touchend、click 和键盘等手势中尝试解锁。即使前一次 resume() 一直挂起，新的有效手势仍会再次调用，避免 iPhone Safari 永久无声；下载失败的音频保留 3 秒冷却后可在下次手势中重试，已成功解码的音频继续复用。页面底部的“试听音效”可主动解锁、重试缺失音频并播放放置声。iPhone 若仍听不到，请关闭静音模式并调高音量；页面无法判断扬声器是否真正发出了声音。
+音频在 pointerup、touchend、click 和键盘等手势中尝试解锁。即使前一次 resume() 一直挂起，新的有效手势仍会再次调用，避免 iPhone Safari 永久无声；下载失败的音频保留 3 秒冷却后可在下次手势中重试，已成功解码的音频继续复用。正常触摸游戏区域或点击操作按钮即可触发音频解锁及缺失音频重试。iPhone 若仍听不到，请关闭静音模式并调高音量；页面无法判断扬声器是否真正发出了声音。
 
 ## 胜利与领奖
 
@@ -31,7 +31,7 @@
 默认配置：`config/merge/default.json`。
 
 - **双击运行时**：浏览器禁止网页自动读取相邻的 JSON 文件，所以使用 `src/merge/offline-data.js` 中随包附带的默认皮肤数据。它由原始 JSON、PNG 和音频素材生成，不是另一份需要手动维护的配置。
-- **修改参数或换皮肤时**：点击页面底部的“导入皮肤”，选择一个 JSON 和它需要的 PNG（可同时多选）。如果仍使用默认的九张图片 PNG，只选择修改后的 JSON 即可，游戏会复用内置图片。自定义 PNG 以文件名匹配 JSON 的图片路径，不支持不同目录下的同名 PNG。导入只在本次页面会话生效，刷新恢复默认皮肤。
+- **修改参数或换皮肤时**：编辑默认 JSON 及其 PNG 路径后重新打包。网站也支持通过 `merge.html?skin=配置文件路径` 加载另一套 JSON；双击模式使用已打包的默认皮肤。页面不提供文件选择入口。
 - **放在已有网站上时**：仍直接读取原始 JSON，修改后刷新生效；`merge.html?skin=./config/merge/another.json` 可以选择其他皮肤。图片路径相对于 JSON 所在目录，跨域图片需要 CORS。
 - **要把修改后的 JSON/PNG 设为双击默认值**：开发者运行一次 `python scripts/package_merge.py`，更新离线包即可。这个脚本只用 Python 标准库，无需安装第三方包；玩游戏的人不需要 Python。
 
@@ -265,7 +265,7 @@
 - 旧配置缺少新增粒子字段时，最短寿命比例补 0.5、最小速度比例补 0.35、不透明度范围补 0.45–0.75、数量上限补 512；缺少粒子重力时按该配置的 physics.gravity 补齐。
 - 其他必需字段不要依赖自动补全；以当前完整 JSON 为模板修改最可靠。
 - 音效路径、音量、合成随机升调不在此 JSON 中，而在 `src/merge/audio.js` 的 `AUDIO` 常量中。当前没有撞击声及其触发/限频/能量计算逻辑。
-- 修改配置后按前面的“皮肤与参数”流程导入试用，或运行 `python scripts/package_merge.py` 更新双击默认数据。仅编辑 JSON 后直接重新双击 HTML，不会自动采用尚未打包的新默认值。
+- 修改配置后按前面的“皮肤与参数”流程修改配置，并运行 `python scripts/package_merge.py` 更新双击默认数据。仅编辑 JSON 后直接重新双击 HTML，不会自动采用尚未打包的新默认值。
 
 ## 实现与扩展
 
@@ -310,7 +310,7 @@ node --test tests/*.test.js              # 只运行 Node 内置测试
 
 测试按职责拆分为配置、几何、物理、粒子、音效和离线打包；共享配置/世界构造放在 `tests/helpers/`。`scripts/check.py` 使用 Python 标准库和 Node 内置测试器，不下载任何依赖；如果本机已有 `node_modules/typescript/bin/tsc`，还会检查 JSDoc 类型，否则明确跳过类型检查。
 
-可选浏览器回归脚本为 `tests/browser/merge.smoke.mjs`：开发环境已经安装 Playwright 和 Edge 时，运行 `node tests/browser/merge.smoke.mjs`。其他 Chromium 浏览器可用 `BROWSER_EXECUTABLE` 指定可执行文件。它直接打开 file://，分别检查桌面键盘/手机触摸、离线音效、导入成功及失败后的状态、暂停重开、九阶合成领奖和无 HTTP 请求，不启动服务器。这些开发工具不是游戏运行依赖。另可运行 `node tests/browser/loading.smoke.mjs`，用浏览器请求拦截模拟在线访问、图片首次失败及音频断网恢复，检查在线不下载离线包，无需启动服务器。
+可选浏览器回归脚本为 `tests/browser/merge.smoke.mjs`：开发环境已经安装 Playwright 和 Edge 时，运行 `node tests/browser/merge.smoke.mjs`。其他 Chromium 浏览器可用 `BROWSER_EXECUTABLE` 指定可执行文件。它直接打开 file://，分别检查桌面键盘/手机触摸、离线音效、精简界面、暂停重开、九阶合成领奖和无 HTTP 请求，不启动服务器。这些开发工具不是游戏运行依赖。另可运行 `node tests/browser/loading.smoke.mjs`，用浏览器请求拦截模拟在线访问、图片首次失败及音频断网恢复，检查在线不下载离线包，无需启动服务器。
 
 所有截图、性能记录、临时素材和本地开发工具放在被忽略的 `test-results/`、`node_modules/` 中。原始贴纸和备用素材保留在 assets 中；默认皮肤只加载 JSON 指定的九张图和三段音频。生成的 `game.js`、`offline-data.js` 必须随源码一起提交，保证下载仓库后能直接双击运行。
 

@@ -23,7 +23,6 @@ const AUDIO = {
   onsetPaddingSeconds: 0.004,
   fadeInSeconds: 0.002,
   retryCooldownMs: 3000,
-  previewWaitMs: 1500,
 };
 const CENTS_PER_SEMITONE = 100;
 
@@ -339,38 +338,6 @@ export class MergeAudio {
     this.playbackGeneration++;
     for (const source of this.voices) source.stop();
     this.voices.clear();
-  }
-
-  /** Explicit tap target for Safari, including recovery after a network error. */
-  async preview() {
-    this.retryAfter.fill(0);
-    this.unlock(); // Must stay synchronous with the trusted click.
-    const generation = this.playbackGeneration;
-    let timer = 0;
-    try {
-      await Promise.race([
-        Promise.all([this.ready, this.resuming]),
-        new Promise((resolve) => {
-          timer = window.setTimeout(resolve, AUDIO.previewWaitMs);
-        }),
-      ]);
-      if (
-        this.disposed ||
-        document.hidden ||
-        generation !== this.playbackGeneration ||
-        this.context?.state !== "running" ||
-        !this.buffers.some(
-          (buffer, i) => buffer && this.clips[i].type === "drop",
-        )
-      )
-        return false;
-      this.onEvent({ type: "drop", x: 0, y: 0, level: 0, strength: 1 });
-      return true;
-    } catch {
-      return false;
-    } finally {
-      clearTimeout(timer);
-    }
   }
 
   destroy() {

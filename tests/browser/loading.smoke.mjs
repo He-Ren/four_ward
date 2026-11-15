@@ -75,7 +75,10 @@ try {
     2,
   );
   audioUnavailable = false;
-  await page.locator("#sound-preview").tap();
+  await page.waitForFunction(
+    () => performance.now() >= window.__merge.sound.retryAfter[0],
+  );
+  await page.locator("#game").tap();
   await page.waitForFunction(() => window.__merge.sound.buffers.every(Boolean));
   await page.waitForFunction(
     () => window.__merge.sound.context.state === "running",
@@ -89,21 +92,7 @@ try {
   assert.equal(
     requests.get("assets/merge/pop.mp3"),
     4,
-    "explicit tap recovers the failed clip",
-  );
-  const skin = await readFile(new URL("config/merge/default.json", root));
-  await page.locator("#skin-files").setInputFiles({
-    name: "skin.json",
-    mimeType: "application/json",
-    buffer: skin,
-  });
-  await page.waitForFunction(
-    () => !document.querySelector("#import-skin").disabled,
-  );
-  assert.equal(
-    await page.locator("body").getAttribute("data-state"),
-    "playing",
-    "online JSON-only import still works",
+    "normal game tap recovers the failed clip",
   );
   assert.equal(
     await page.evaluate(
@@ -113,7 +102,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "Online mobile: no offline bundle, transient PNG recovery, failed audio retry, sound preview and JSON-only skin import passed",
+    "Online mobile: no offline bundle, transient PNG recovery, failed audio retry, normal touch audio activation passed",
   );
   await context.close();
 } finally {

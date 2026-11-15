@@ -65,10 +65,7 @@ h1 {
   margin: 0 0 14px;
   font-size: clamp(32px, 5vw, 46px);
 }
-.intro > p:last-child {
-  color: var(--muted);
-  margin: 0;
-}
+
 .game-card {
   display: grid;
   grid-template-columns: 1fr 1.1fr;
@@ -116,13 +113,7 @@ h1 {
   bottom: 17%;
   transform: rotate(14deg);
 }
-.preview-caption {
-  position: absolute;
-  bottom: 24px;
-  color: var(--accent);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-}
+
 .game-info {
   padding: 40px;
 }
@@ -131,7 +122,6 @@ h2 {
   font-size: 34px;
 }
 .description,
-.controls,
 .reward {
   font-size: 14px;
   line-height: 1.9;
@@ -139,10 +129,7 @@ h2 {
 .description {
   margin: 0 0 18px;
 }
-.controls {
-  color: var(--muted);
-  margin: 0 0 18px;
-}
+
 .reward {
   padding-top: 18px;
   margin: 0 0 24px;
@@ -199,9 +186,7 @@ footer {
     width: 56px;
     height: 56px;
   }
-  .preview-caption {
-    bottom: 16px;
-  }
+
   .game-info {
     padding: 28px 24px;
   }

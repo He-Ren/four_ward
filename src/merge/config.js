@@ -203,7 +203,7 @@ export function validateSkin(input) {
 export async function loadSkin(url) {
   if (location.protocol === "file:") {
     if (url !== "./config/merge/default.json")
-      throw new Error("双击模式请使用“导入皮肤”选择 JSON 和 PNG 文件。");
+      throw new Error("双击模式仅使用默认配置，请修改 JSON 后重新打包。");
     const offline = Reflect.get(window, "MergeOffline");
     if (!offline) throw new Error("缺少离线皮肤数据，请保留完整的游戏文件夹。");
     const config = validateSkin(structuredClone(offline.skin));
@@ -221,53 +221,6 @@ export async function loadSkin(url) {
     ...item,
     image: new URL(item.image, absolute).href,
   }));
-  return config;
-}
-
-/** Read selected files without a server. @param {File[]} files @returns {Promise<Skin>} */
-export async function loadLocalSkin(files) {
-  const jsonFiles = files.filter((file) =>
-    file.name.toLowerCase().endsWith(".json"),
-  );
-  if (jsonFiles.length !== 1)
-    throw new Error("请选择一个皮肤 JSON，以及它使用的 PNG 图片（可多选）。");
-  const config = validateSkin(JSON.parse(await jsonFiles[0].text()));
-  const offline = Reflect.get(window, "MergeOffline");
-  /** @type {Map<string, string>} */
-  const images = new Map();
-  for (const [name, data] of Object.entries(offline?.images || {}))
-    images.set(name.split("/").pop() || name, /** @type {string} */ (data));
-  // Online play no longer downloads the offline bundle. Keep JSON-only imports
-  // working by resolving the shipped skin's images to their normal URLs.
-  if (!offline && location.protocol !== "file:") {
-    const defaults = await loadSkin("./config/merge/default.json");
-    for (const item of defaults.items) {
-      const name = new URL(item.image).pathname.split("/").pop() || "";
-      images.set(decodeURIComponent(name), item.image);
-    }
-  }
-  const selectedNames = new Set();
-  for (const file of files.filter((file) =>
-    file.name.toLowerCase().endsWith(".png"),
-  )) {
-    if (selectedNames.has(file.name))
-      throw new Error(`图片文件名重复：${file.name}`);
-    selectedNames.add(file.name);
-    const data = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error(`无法读取 ${file.name}`));
-      reader.readAsDataURL(file);
-    });
-    images.set(file.name, data);
-  }
-  config.items = config.items.map((item) => {
-    const name = item.image.replaceAll("\\", "/").split("/").pop() || "";
-    const image = images.get(name);
-    if (!image)
-      throw new Error(`缺少 ${name}：请同时选择 JSON 和所需 PNG 文件。`);
-    return { ...item, image };
-  });
   return config;
 }
 
