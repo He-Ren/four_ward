@@ -1,0 +1,211 @@
+:root {
+  color-scheme: light;
+  --background: #f7f5ee;
+  --surface: #fffdf8;
+  --ink: #253d37;
+  --accent: #507862;
+  --muted: #65766d;
+  --line: #dce1d7;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: var(--background);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+.page {
+  width: min(1080px, 100%);
+  margin: auto;
+  padding: 32px 32px 24px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  font-weight: 650;
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 34px;
+}
+.brand small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+.intro {
+  margin: 64px 0 32px;
+}
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  line-height: 1.8;
+}
+h1,
+h2 {
+  font-family: "Songti SC", "SimSun", serif;
+  font-weight: 600;
+}
+h1 {
+  margin: 0 0 14px;
+  font-size: clamp(32px, 5vw, 46px);
+}
+.intro > p:last-child {
+  color: var(--muted);
+  margin: 0;
+}
+.game-card {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+}
+.preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+  overflow: hidden;
+  background: #eaf0e5;
+}
+.preview-circle {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: #dce6d7;
+}
+.hero-sticker {
+  position: relative;
+  z-index: 1;
+  width: 210px;
+  max-height: 280px;
+  object-fit: contain;
+  transform: rotate(-7deg);
+}
+.sticker {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.sticker-left {
+  left: 8%;
+  top: 15%;
+  transform: rotate(-18deg);
+}
+.sticker-right {
+  right: 6%;
+  bottom: 17%;
+  transform: rotate(14deg);
+}
+.preview-caption {
+  position: absolute;
+  bottom: 24px;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+.game-info {
+  padding: 40px;
+}
+h2 {
+  margin: 0 0 20px;
+  font-size: 34px;
+}
+.description,
+.controls,
+.reward {
+  font-size: 14px;
+  line-height: 1.9;
+}
+.description {
+  margin: 0 0 18px;
+}
+.controls {
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+.reward {
+  padding-top: 18px;
+  margin: 0 0 24px;
+  border-top: 1px solid var(--line);
+  color: var(--accent);
+}
+.play-link {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 48px;
+  padding: 14px 22px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--surface);
+  text-decoration: none;
+  font-size: 16px;
+}
+.play-link:hover {
+  background: var(--accent);
+}
+.play-link:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+footer {
+  padding-top: 32px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 680px) {
+  .page {
+    padding: 24px 20px;
+  }
+  .intro {
+    margin-top: 40px;
+  }
+  .game-card {
+    grid-template-columns: 1fr;
+  }
+  .preview {
+    min-height: 260px;
+  }
+  .preview-circle {
+    width: 200px;
+    height: 200px;
+  }
+  .hero-sticker {
+    width: 150px;
+    max-height: 200px;
+  }
+  .sticker {
+    width: 56px;
+    height: 56px;
+  }
+  .preview-caption {
+    bottom: 16px;
+  }
+  .game-info {
+    padding: 28px 24px;
+  }
+  .play-link {
+    width: 100%;
+  }
+}

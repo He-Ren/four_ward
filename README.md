@@ -4,6 +4,8 @@
 
 ## 运行
 
+主页为 `index.html`，包含游戏介绍、操作说明和进入 `merge.html` 的链接；样式在 `src/home/styles.css`。直接双击主页即可浏览，也可以从游戏左上角的 4Ward 标识返回主页。
+
 **直接双击 `merge.html`。** 请保留整个文件夹结构，不要只复制 HTML。
 
 也可以把 `merge.html`、`src/merge/`、`config/merge/`、`assets/stickers/`、`assets/merge/pop.mp3`、`assets/merge/pop2.mp3`、`assets/merge/drop-soft.wav` 放到已有的静态网站，和其他小游戏共用同一个网站服务；本游戏没有独立服务、端口或后端。手机可以通过这个已有网站游玩。手机系统的文件预览器不一定允许运行 JavaScript，浏览器访问网站是更通用的手机入口。
