@@ -301,6 +301,30 @@ footer {
   font: italic 52px Georgia;
   color: var(--accent);
 }
+/* CSS starts before the large game/assets scripts finish loading. */
+body[data-state="loading"] .overlay-icon {
+  display: inline-block;
+  min-width: 3ch;
+  font-family: monospace;
+  font-style: normal;
+  text-align: left;
+}
+body[data-state="loading"] .overlay-icon::after {
+  content: ".";
+  animation: loading-dots 1.2s steps(1, end) infinite;
+}
+@keyframes loading-dots {
+  0%,
+  100% {
+    content: ".";
+  }
+  33.333% {
+    content: "..";
+  }
+  66.667% {
+    content: "...";
+  }
+}
 .overlay-card h2 {
   font-size: 25px;
   margin: 15px 0 8px;

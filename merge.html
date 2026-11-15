@@ -13,10 +13,10 @@
     />
     <title>合成五哥</title>
     <link rel="icon" href="assets/stickers/sticker_logo.png" type="image/png" />
-    <link rel="stylesheet" href="src/merge/styles.css?v=clean-ui-1" />
-    <script defer src="src/merge/boot.js?v=clean-ui-1"></script>
+    <link rel="stylesheet" href="src/merge/styles.css?v=loading-dots-1" />
+    <script defer src="src/merge/boot.js?v=loading-dots-1"></script>
   </head>
-  <body>
+  <body data-state="loading">
     <div class="app">
       <header class="topbar">
         <a
@@ -53,9 +53,13 @@
             ></canvas>
             <div id="overlay" class="overlay" role="status">
               <div class="overlay-card">
-                <span id="overlay-icon" class="overlay-icon">···</span>
-                <h2 id="overlay-title">准备一点小快乐</h2>
-                <p id="overlay-message">正在加载皮肤与物品…</p>
+                <span
+                  id="overlay-icon"
+                  class="overlay-icon"
+                  aria-hidden="true"
+                ></span>
+                <h2 id="overlay-title">小红帽赶路中……</h2>
+                <p id="overlay-message">正在加载美术资源</p>
                 <button id="overlay-action" type="button" hidden>
                   再玩一次
                 </button>

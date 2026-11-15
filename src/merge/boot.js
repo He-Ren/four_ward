@@ -22,8 +22,12 @@
     await load("game.js");
   }
   void start().catch((error) => {
+    const title = document.getElementById("overlay-title");
+    const icon = document.getElementById("overlay-icon");
     const message = document.getElementById("overlay-message");
     const action = document.getElementById("overlay-action");
+    if (title) title.textContent = "暂时没能开始";
+    if (icon) icon.textContent = "!";
     if (message) message.textContent = error.message;
     if (action) {
       action.hidden = false;
