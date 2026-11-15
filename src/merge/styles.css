@@ -17,7 +17,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-#import-skin {
+#import-skin,
+#sound-preview {
   flex-shrink: 0;
   padding: 4px 7px;
   font-size: 10px;

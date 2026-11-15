@@ -13,9 +13,8 @@
     />
     <title>合成五哥</title>
     <link rel="icon" href="assets/stickers/sticker_logo.png" type="image/png" />
-    <link rel="stylesheet" href="src/merge/styles.css" />
-    <script defer src="src/merge/offline-data.js"></script>
-    <script defer src="src/merge/game.js"></script>
+    <link rel="stylesheet" href="src/merge/styles.css?v=mobile-audio-1" />
+    <script defer src="src/merge/boot.js?v=mobile-audio-1"></script>
   </head>
   <body>
     <div class="app">
@@ -95,6 +94,13 @@
         <span class="live-dot" aria-hidden="true"></span
         ><span id="status" aria-live="polite">正在准备…</span
         ><span class="footer-note">慢一点，也没关系。</span>
+        <button
+          id="sound-preview"
+          type="button"
+          title="开启或试听音效；iPhone 请关闭静音模式"
+        >
+          试听音效
+        </button>
         <button
           id="import-skin"
           type="button"

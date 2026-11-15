@@ -1,4 +1,5 @@
 // @ts-check
+import { fetchResource } from "./resources.js";
 /** Audio is independent of physics; decoded clips support overlapping effects. */
 const AUDIO = {
   sounds: {
@@ -21,6 +22,8 @@ const AUDIO = {
   silenceThreshold: 0.001,
   onsetPaddingSeconds: 0.004,
   fadeInSeconds: 0.002,
+  retryCooldownMs: 3000,
+  previewWaitMs: 1500,
 };
 const CENTS_PER_SEMITONE = 100;
 
@@ -144,9 +147,10 @@ export class MergeAudio {
     this.disposed = false;
     this.warmed = false;
     this.listeners = new AbortController();
-    this.bytes = this.clips.map(({ url }) =>
-      this.loadBytes(url).catch(() => null),
+    /** @type {(Promise<void>|null)[]} */ this.pending = this.clips.map(
+      () => null,
     );
+    this.retryAfter = this.clips.map(() => 0);
     // Decode before the first gesture so the first keyboard drop has sound too.
     // Creating/decoding is allowed while suspended; unlock starts output later.
     this.prepare();
@@ -160,6 +164,14 @@ export class MergeAudio {
       capture: true,
       signal: this.listeners.signal,
     });
+    // Touch activation is granted on release, not necessarily on pointerdown.
+    // Keep all listeners: later gestures also recover interrupted iOS audio.
+    for (const type of ["pointerup", "touchend", "click"])
+      document.addEventListener(type, unlock, {
+        capture: true,
+        passive: true,
+        signal: this.listeners.signal,
+      });
     document.addEventListener(
       "visibilitychange",
       () => {
@@ -178,9 +190,29 @@ export class MergeAudio {
       const binary = atob(source.slice(source.indexOf(",") + 1));
       return Uint8Array.from(binary, (char) => char.charCodeAt(0)).buffer;
     }
-    const response = await fetch(new URL(url, location.href));
-    if (!response.ok) throw new Error("Game audio unavailable");
-    return response.arrayBuffer();
+    return fetchResource(new URL(url, location.href), (response) =>
+      response.arrayBuffer(),
+    );
+  }
+
+  /** @param {number} index @param {AudioContext} context */
+  async loadClip(index, context) {
+    try {
+      const bytes = await this.loadBytes(this.clips[index].url);
+      if (this.disposed) return;
+      const buffer = await context.decodeAudioData(bytes);
+      if (this.disposed) return;
+      const prepared = normalizeLoudness(trimLeadingSilence(context, buffer));
+      this.buffers[index] =
+        this.clips[index].type === "drop"
+          ? softenEffect(prepared, AUDIO.dropVolume, AUDIO.dropLowpassHz)
+          : prepared;
+    } catch {
+      // A failed first request must not permanently disable this clip.
+      this.retryAfter[index] = performance.now() + AUDIO.retryCooldownMs;
+    } finally {
+      this.pending[index] = null;
+    }
   }
 
   prepare() {
@@ -195,29 +227,23 @@ export class MergeAudio {
         this.gain.gain.value = AUDIO.volume;
         this.gain.connect(this.context.destination);
       } catch {
+        void this.context?.close().catch(() => {});
+        this.context = null;
+        this.gain = null;
         return;
       }
     }
     const context = this.context;
     if (!context) return;
-    this.ready ??= Promise.all(
-      this.bytes.map(async (pending, index) => {
-        const bytes = await pending;
-        if (!bytes || this.disposed) return;
-        try {
-          const buffer = await context.decodeAudioData(bytes);
-          if (!this.disposed) {
-            const prepared = normalizeLoudness(
-              trimLeadingSilence(context, buffer),
-            );
-            this.buffers[index] =
-              this.clips[index].type === "drop"
-                ? softenEffect(prepared, AUDIO.dropVolume, AUDIO.dropLowpassHz)
-                : prepared;
-          }
-        } catch {
-          /* One missing/unsupported clip must not disable the other clip. */
-        }
+    this.ready = Promise.all(
+      this.clips.map((_, index) => {
+        if (
+          !this.buffers[index] &&
+          !this.pending[index] &&
+          performance.now() >= this.retryAfter[index]
+        )
+          this.pending[index] = this.loadClip(index, context);
+        return this.pending[index];
       }),
     ).then(() => {});
   }
@@ -227,15 +253,18 @@ export class MergeAudio {
     this.prepare();
     const context = this.context;
     if (!context || !this.gain) return;
-    if (context.state !== "running" && !this.resuming) {
-      this.resuming = context
+    if (context.state !== "running") {
+      // Safari may leave an unactivated resume() pending. A later, valid
+      // touchend/click must call resume() again instead of waiting forever.
+      const resuming = context
         .resume()
         .catch(() => {})
         .finally(() => {
-          this.resuming = null;
+          if (this.resuming === resuming) this.resuming = null;
         });
+      this.resuming = resuming;
     }
-    if (!this.warmed) {
+    if (!this.warmed || context.state !== "running") {
       // A silent one-sample source also unlocks audio on mobile WebKit.
       const warmup = context.createBufferSource();
       warmup.buffer = context.createBuffer(1, 1, context.sampleRate);
@@ -310,6 +339,38 @@ export class MergeAudio {
     this.playbackGeneration++;
     for (const source of this.voices) source.stop();
     this.voices.clear();
+  }
+
+  /** Explicit tap target for Safari, including recovery after a network error. */
+  async preview() {
+    this.retryAfter.fill(0);
+    this.unlock(); // Must stay synchronous with the trusted click.
+    const generation = this.playbackGeneration;
+    let timer = 0;
+    try {
+      await Promise.race([
+        Promise.all([this.ready, this.resuming]),
+        new Promise((resolve) => {
+          timer = window.setTimeout(resolve, AUDIO.previewWaitMs);
+        }),
+      ]);
+      if (
+        this.disposed ||
+        document.hidden ||
+        generation !== this.playbackGeneration ||
+        this.context?.state !== "running" ||
+        !this.buffers.some(
+          (buffer, i) => buffer && this.clips[i].type === "drop",
+        )
+      )
+        return false;
+      this.onEvent({ type: "drop", x: 0, y: 0, level: 0, strength: 1 });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   destroy() {

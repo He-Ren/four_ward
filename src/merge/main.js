@@ -29,6 +29,22 @@ const rewardRestart = /** @type {HTMLButtonElement} */ (
 
 let dispose = () => {};
 const sound = new MergeAudio();
+const soundPreview = /** @type {HTMLButtonElement} */ (
+  element("sound-preview")
+);
+soundPreview.onclick = async () => {
+  soundPreview.disabled = true;
+  try {
+    const played = await sound.preview();
+    const status = element("status");
+    status.textContent = played
+      ? "已试听；iPhone 请关闭静音模式并调高音量"
+      : "音效尚未就绪，请稍后再点试听";
+    status.title = status.textContent;
+  } finally {
+    soundPreview.disabled = false;
+  }
+};
 window.addEventListener("pagehide", (event) => {
   if (!event.persisted) sound.destroy();
 });

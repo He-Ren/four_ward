@@ -40,9 +40,100 @@ matter-js/build/matter.js:
 return {Matter: export_Matter, earcut: we};
 })();
 
+// ---- resources.js ----
+modules["resources"] = (() => {
+// @ts-check
+const RESOURCE_POLICY = Object.freeze({
+  attempts: 3,
+  retryDelayMs: 350,
+  timeoutMs: 15000,
+});
+
+/** Bounded retries; failures are never cached as successful results.
+ * @template T
+ * @param {(attempt:number)=>Promise<T>} operation
+ * @returns {Promise<T>}
+ */
+async function retryResource(operation) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await operation(attempt);
+    } catch (error) {
+      if (attempt + 1 >= RESOURCE_POLICY.attempts) throw error;
+      await new Promise((resolve) =>
+        setTimeout(resolve, RESOURCE_POLICY.retryDelayMs * (attempt + 1)),
+      );
+    }
+  }
+}
+
+/** Timeout covers both headers and the response body.
+ * @template T
+ * @param {string|URL} url
+ * @param {(response:Response)=>Promise<T>} read
+ * @returns {Promise<T>}
+ */
+function fetchResource(url, read) {
+  return retryResource(async (attempt) => {
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(),
+      RESOURCE_POLICY.timeoutMs,
+    );
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        cache: attempt ? "reload" : "default",
+      });
+      if (!response.ok) throw new Error(`资源加载失败 (${response.status})`);
+      return await read(response);
+    } finally {
+      clearTimeout(timer);
+    }
+  });
+}
+
+/** @param {string} url @returns {Promise<HTMLImageElement>} */
+function loadImage(url) {
+  return retryResource(async (attempt) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    const source = new URL(url, location.href);
+    if (attempt && /^https?:$/.test(source.protocol))
+      source.searchParams.set("retry", String(attempt));
+    let timer = 0;
+    try {
+      await new Promise((resolve, reject) => {
+        image.onload = () => resolve(undefined);
+        image.onerror = () => reject(new Error("图片下载失败"));
+        timer = window.setTimeout(
+          () => reject(new Error("图片下载超时")),
+          RESOURCE_POLICY.timeoutMs,
+        );
+        image.src = source.href;
+      });
+      // onload is sufficient for drawImage; decode() may reject on Safari even
+      // when a completely downloaded image can already be drawn.
+      if (!image.naturalWidth || !image.naturalHeight)
+        throw new Error("图片内容无效");
+      return image;
+    } catch (error) {
+      image.src = "";
+      throw error;
+    } finally {
+      clearTimeout(timer);
+      image.onload = image.onerror = null;
+    }
+  });
+}
+
+return {RESOURCE_POLICY, retryResource, fetchResource, loadImage};
+})();
+
 // ---- config.js ----
 modules["config"] = (() => {
 // @ts-check
+const { fetchResource } = modules["resources"];
 /** @typedef {import('./types.js').Skin} Skin */
 
 /** Validate untrusted JSON before constructing images, arrays or physics bodies.
@@ -257,9 +348,9 @@ async function loadSkin(url) {
     return config;
   }
   const absolute = new URL(url, location.href);
-  const response = await fetch(absolute);
-  if (!response.ok) throw new Error(`无法读取皮肤 (${response.status})`);
-  const config = validateSkin(await response.json());
+  const config = validateSkin(
+    await fetchResource(absolute, (response) => response.json()),
+  );
   config.items = config.items.map((item) => ({
     ...item,
     image: new URL(item.image, absolute).href,
@@ -280,6 +371,15 @@ async function loadLocalSkin(files) {
   const images = new Map();
   for (const [name, data] of Object.entries(offline?.images || {}))
     images.set(name.split("/").pop() || name, /** @type {string} */ (data));
+  // Online play no longer downloads the offline bundle. Keep JSON-only imports
+  // working by resolving the shipped skin's images to their normal URLs.
+  if (!offline && location.protocol !== "file:") {
+    const defaults = await loadSkin("./config/merge/default.json");
+    for (const item of defaults.items) {
+      const name = new URL(item.image).pathname.split("/").pop() || "";
+      images.set(decodeURIComponent(name), item.image);
+    }
+  }
   const selectedNames = new Set();
   for (const file of files.filter((file) =>
     file.name.toLowerCase().endsWith(".png"),
@@ -589,6 +689,7 @@ return {area, maskToPolygons, centerOfMass};
 modules["assets"] = (() => {
 // @ts-check
 const { maskToPolygons, centerOfMass } = modules["geometry"];
+const { loadImage } = modules["resources"];
 /** @typedef {import('./types.js').Skin} Skin */
 /** @typedef {import('./types.js').Sprite} Sprite */
 // Bounded reservoir of actual visible-pixel colors, sampled once at load time.
@@ -602,127 +703,131 @@ function context(canvas) {
 }
 /** @param {Skin} config @returns {Promise<Sprite[]>} */
 async function loadSprites(config) {
-  return Promise.all(
-    config.items.map(async (item) => {
-      const image = new Image();
-      image.crossOrigin = "anonymous";
-      image.src = item.image;
-      try {
-        await image.decode();
-      } catch {
-        throw new Error(`无法加载图片：${item.image}`);
-      }
-      const source = document.createElement("canvas");
-      source.width = image.naturalWidth;
-      source.height = image.naturalHeight;
-      const sourceContext = context(source);
-      sourceContext.drawImage(image, 0, 0);
-      const { data } = sourceContext.getImageData(
-        0,
-        0,
-        source.width,
-        source.height,
+  // Process one full-resolution image at a time to bound Safari's transient
+  // decoded-image/canvas memory, without changing source pixels or colliders.
+  /** @type {Sprite[]} */ const sprites = [];
+  for (const item of config.items) {
+    let image;
+    try {
+      image = await loadImage(item.image);
+    } catch {
+      throw new Error(
+        `无法加载第 ${sprites.length + 1} 阶图片，请检查网络后重试。`,
       );
-      let left = source.width,
-        top = source.height,
-        right = -1,
-        bottom = -1;
-      /** @type {string[]} */ const particleColors = [];
-      let visiblePixels = 0;
-      for (let y = 0; y < source.height; y++)
-        for (let x = 0; x < source.width; x++) {
-          if (
-            data[(y * source.width + x) * 4 + 3] >=
-            config.collision.alphaThreshold
-          ) {
-            left = Math.min(left, x);
-            right = Math.max(right, x);
-            top = Math.min(top, y);
-            bottom = Math.max(bottom, y);
-            visiblePixels++;
-            const slot =
-              visiblePixels <= PARTICLE_PALETTE_SIZE
-                ? visiblePixels - 1
-                : Math.floor(Math.random() * visiblePixels);
-            if (slot < PARTICLE_PALETTE_SIZE) {
-              const offset = (y * source.width + x) * 4;
-              particleColors[slot] =
-                `rgb(${data[offset]}, ${data[offset + 1]}, ${data[offset + 2]})`;
-            }
+    }
+    const source = document.createElement("canvas");
+    source.width = image.naturalWidth;
+    source.height = image.naturalHeight;
+    const sourceContext = context(source);
+    sourceContext.drawImage(image, 0, 0);
+    const { data } = sourceContext.getImageData(
+      0,
+      0,
+      source.width,
+      source.height,
+    );
+    let left = source.width,
+      top = source.height,
+      right = -1,
+      bottom = -1;
+    /** @type {string[]} */ const particleColors = [];
+    let visiblePixels = 0;
+    for (let y = 0; y < source.height; y++)
+      for (let x = 0; x < source.width; x++) {
+        if (
+          data[(y * source.width + x) * 4 + 3] >=
+          config.collision.alphaThreshold
+        ) {
+          left = Math.min(left, x);
+          right = Math.max(right, x);
+          top = Math.min(top, y);
+          bottom = Math.max(bottom, y);
+          visiblePixels++;
+          const slot =
+            visiblePixels <= PARTICLE_PALETTE_SIZE
+              ? visiblePixels - 1
+              : Math.floor(Math.random() * visiblePixels);
+          if (slot < PARTICLE_PALETTE_SIZE) {
+            const offset = (y * source.width + x) * 4;
+            particleColors[slot] =
+              `rgb(${data[offset]}, ${data[offset + 1]}, ${data[offset + 2]})`;
           }
         }
-      if (right < left) throw new Error(`${item.name} 是全透明图片`);
-      const width = right - left + 1,
-        height = bottom - top + 1;
-      const cropped = document.createElement("canvas");
-      cropped.width = width;
-      cropped.height = height;
-      context(cropped).drawImage(
-        source,
-        left,
-        top,
-        width,
-        height,
-        0,
-        0,
-        width,
-        height,
+      }
+    if (right < left) throw new Error(`${item.name} 是全透明图片`);
+    const width = right - left + 1,
+      height = bottom - top + 1;
+    const cropped = document.createElement("canvas");
+    cropped.width = width;
+    cropped.height = height;
+    context(cropped).drawImage(
+      source,
+      left,
+      top,
+      width,
+      height,
+      0,
+      0,
+      width,
+      height,
+    );
+    const sample = document.createElement("canvas");
+    sample.width = Math.max(
+      1,
+      Math.round(
+        (config.collision.resolution * width) / Math.max(width, height),
+      ),
+    );
+    sample.height = Math.max(
+      1,
+      Math.round(
+        (config.collision.resolution * height) / Math.max(width, height),
+      ),
+    );
+    const sampleContext = context(sample);
+    sampleContext.drawImage(cropped, 0, 0, sample.width, sample.height);
+    const pixels = sampleContext.getImageData(
+      0,
+      0,
+      sample.width,
+      sample.height,
+    ).data;
+    const mask = Uint8Array.from(
+      { length: sample.width * sample.height },
+      (_, i) => (pixels[i * 4 + 3] >= config.collision.alphaThreshold ? 1 : 0),
+    );
+    const worldWidth = (item.size * width) / Math.max(width, height),
+      worldHeight = (item.size * height) / Math.max(width, height);
+    const polygons = maskToPolygons(
+      mask,
+      sample.width,
+      sample.height,
+      config.collision.simplifyTolerance,
+    ).map((polygon) =>
+      polygon.map((p) => ({
+        x: (p.x / sample.width) * worldWidth,
+        y: (p.y / sample.height) * worldHeight,
+      })),
+    );
+    if (polygons.length > config.collision.maxParts)
+      throw new Error(
+        `${item.name} 轮廓过于复杂：${polygons.length} 个凸片，请简化 PNG 或降低 collision.resolution`,
       );
-      const sample = document.createElement("canvas");
-      sample.width = Math.max(
-        1,
-        Math.round(
-          (config.collision.resolution * width) / Math.max(width, height),
-        ),
-      );
-      sample.height = Math.max(
-        1,
-        Math.round(
-          (config.collision.resolution * height) / Math.max(width, height),
-        ),
-      );
-      const sampleContext = context(sample);
-      sampleContext.drawImage(cropped, 0, 0, sample.width, sample.height);
-      const pixels = sampleContext.getImageData(
-        0,
-        0,
-        sample.width,
-        sample.height,
-      ).data;
-      const mask = Uint8Array.from(
-        { length: sample.width * sample.height },
-        (_, i) =>
-          pixels[i * 4 + 3] >= config.collision.alphaThreshold ? 1 : 0,
-      );
-      const worldWidth = (item.size * width) / Math.max(width, height),
-        worldHeight = (item.size * height) / Math.max(width, height);
-      const polygons = maskToPolygons(
-        mask,
-        sample.width,
-        sample.height,
-        config.collision.simplifyTolerance,
-      ).map((polygon) =>
-        polygon.map((p) => ({
-          x: (p.x / sample.width) * worldWidth,
-          y: (p.y / sample.height) * worldHeight,
-        })),
-      );
-      if (polygons.length > config.collision.maxParts)
-        throw new Error(
-          `${item.name} 轮廓过于复杂：${polygons.length} 个凸片，请简化 PNG 或降低 collision.resolution`,
-        );
-      const center = centerOfMass(polygons);
-      return {
-        image: cropped,
-        polygons,
-        width: worldWidth,
-        height: worldHeight,
-        center,
-        source: item.image,
-        particleColors,
-      };
-    }),
-  );
+    const center = centerOfMass(polygons);
+    sprites.push({
+      image: cropped,
+      polygons,
+      width: worldWidth,
+      height: worldHeight,
+      center,
+      source: item.image,
+      particleColors,
+    });
+    // Release scratch backing stores immediately instead of waiting for GC.
+    source.width = source.height = sample.width = sample.height = 0;
+    image.src = "";
+  }
+  return sprites;
 }
 
 return {loadSprites};
@@ -1608,6 +1713,7 @@ return {bindInput};
 // ---- audio.js ----
 modules["audio"] = (() => {
 // @ts-check
+const { fetchResource } = modules["resources"];
 /** Audio is independent of physics; decoded clips support overlapping effects. */
 const AUDIO = {
   sounds: {
@@ -1630,6 +1736,8 @@ const AUDIO = {
   silenceThreshold: 0.001,
   onsetPaddingSeconds: 0.004,
   fadeInSeconds: 0.002,
+  retryCooldownMs: 3000,
+  previewWaitMs: 1500,
 };
 const CENTS_PER_SEMITONE = 100;
 
@@ -1753,9 +1861,10 @@ class MergeAudio {
     this.disposed = false;
     this.warmed = false;
     this.listeners = new AbortController();
-    this.bytes = this.clips.map(({ url }) =>
-      this.loadBytes(url).catch(() => null),
+    /** @type {(Promise<void>|null)[]} */ this.pending = this.clips.map(
+      () => null,
     );
+    this.retryAfter = this.clips.map(() => 0);
     // Decode before the first gesture so the first keyboard drop has sound too.
     // Creating/decoding is allowed while suspended; unlock starts output later.
     this.prepare();
@@ -1769,6 +1878,14 @@ class MergeAudio {
       capture: true,
       signal: this.listeners.signal,
     });
+    // Touch activation is granted on release, not necessarily on pointerdown.
+    // Keep all listeners: later gestures also recover interrupted iOS audio.
+    for (const type of ["pointerup", "touchend", "click"])
+      document.addEventListener(type, unlock, {
+        capture: true,
+        passive: true,
+        signal: this.listeners.signal,
+      });
     document.addEventListener(
       "visibilitychange",
       () => {
@@ -1787,9 +1904,29 @@ class MergeAudio {
       const binary = atob(source.slice(source.indexOf(",") + 1));
       return Uint8Array.from(binary, (char) => char.charCodeAt(0)).buffer;
     }
-    const response = await fetch(new URL(url, location.href));
-    if (!response.ok) throw new Error("Game audio unavailable");
-    return response.arrayBuffer();
+    return fetchResource(new URL(url, location.href), (response) =>
+      response.arrayBuffer(),
+    );
+  }
+
+  /** @param {number} index @param {AudioContext} context */
+  async loadClip(index, context) {
+    try {
+      const bytes = await this.loadBytes(this.clips[index].url);
+      if (this.disposed) return;
+      const buffer = await context.decodeAudioData(bytes);
+      if (this.disposed) return;
+      const prepared = normalizeLoudness(trimLeadingSilence(context, buffer));
+      this.buffers[index] =
+        this.clips[index].type === "drop"
+          ? softenEffect(prepared, AUDIO.dropVolume, AUDIO.dropLowpassHz)
+          : prepared;
+    } catch {
+      // A failed first request must not permanently disable this clip.
+      this.retryAfter[index] = performance.now() + AUDIO.retryCooldownMs;
+    } finally {
+      this.pending[index] = null;
+    }
   }
 
   prepare() {
@@ -1804,29 +1941,23 @@ class MergeAudio {
         this.gain.gain.value = AUDIO.volume;
         this.gain.connect(this.context.destination);
       } catch {
+        void this.context?.close().catch(() => {});
+        this.context = null;
+        this.gain = null;
         return;
       }
     }
     const context = this.context;
     if (!context) return;
-    this.ready ??= Promise.all(
-      this.bytes.map(async (pending, index) => {
-        const bytes = await pending;
-        if (!bytes || this.disposed) return;
-        try {
-          const buffer = await context.decodeAudioData(bytes);
-          if (!this.disposed) {
-            const prepared = normalizeLoudness(
-              trimLeadingSilence(context, buffer),
-            );
-            this.buffers[index] =
-              this.clips[index].type === "drop"
-                ? softenEffect(prepared, AUDIO.dropVolume, AUDIO.dropLowpassHz)
-                : prepared;
-          }
-        } catch {
-          /* One missing/unsupported clip must not disable the other clip. */
-        }
+    this.ready = Promise.all(
+      this.clips.map((_, index) => {
+        if (
+          !this.buffers[index] &&
+          !this.pending[index] &&
+          performance.now() >= this.retryAfter[index]
+        )
+          this.pending[index] = this.loadClip(index, context);
+        return this.pending[index];
       }),
     ).then(() => {});
   }
@@ -1836,15 +1967,18 @@ class MergeAudio {
     this.prepare();
     const context = this.context;
     if (!context || !this.gain) return;
-    if (context.state !== "running" && !this.resuming) {
-      this.resuming = context
+    if (context.state !== "running") {
+      // Safari may leave an unactivated resume() pending. A later, valid
+      // touchend/click must call resume() again instead of waiting forever.
+      const resuming = context
         .resume()
         .catch(() => {})
         .finally(() => {
-          this.resuming = null;
+          if (this.resuming === resuming) this.resuming = null;
         });
+      this.resuming = resuming;
     }
-    if (!this.warmed) {
+    if (!this.warmed || context.state !== "running") {
       // A silent one-sample source also unlocks audio on mobile WebKit.
       const warmup = context.createBufferSource();
       warmup.buffer = context.createBuffer(1, 1, context.sampleRate);
@@ -1921,6 +2055,38 @@ class MergeAudio {
     this.voices.clear();
   }
 
+  /** Explicit tap target for Safari, including recovery after a network error. */
+  async preview() {
+    this.retryAfter.fill(0);
+    this.unlock(); // Must stay synchronous with the trusted click.
+    const generation = this.playbackGeneration;
+    let timer = 0;
+    try {
+      await Promise.race([
+        Promise.all([this.ready, this.resuming]),
+        new Promise((resolve) => {
+          timer = window.setTimeout(resolve, AUDIO.previewWaitMs);
+        }),
+      ]);
+      if (
+        this.disposed ||
+        document.hidden ||
+        generation !== this.playbackGeneration ||
+        this.context?.state !== "running" ||
+        !this.buffers.some(
+          (buffer, i) => buffer && this.clips[i].type === "drop",
+        )
+      )
+        return false;
+      this.onEvent({ type: "drop", x: 0, y: 0, level: 0, strength: 1 });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   destroy() {
     this.disposed = true;
     this.listeners.abort();
@@ -1965,6 +2131,22 @@ const rewardRestart = /** @type {HTMLButtonElement} */ (
 
 let dispose = () => {};
 const sound = new MergeAudio();
+const soundPreview = /** @type {HTMLButtonElement} */ (
+  element("sound-preview")
+);
+soundPreview.onclick = async () => {
+  soundPreview.disabled = true;
+  try {
+    const played = await sound.preview();
+    const status = element("status");
+    status.textContent = played
+      ? "已试听；iPhone 请关闭静音模式并调高音量"
+      : "音效尚未就绪，请稍后再点试听";
+    status.title = status.textContent;
+  } finally {
+    soundPreview.disabled = false;
+  }
+};
 window.addEventListener("pagehide", (event) => {
   if (!event.persisted) sound.destroy();
 });

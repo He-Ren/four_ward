@@ -1,4 +1,5 @@
 // @ts-check
+import { fetchResource } from "./resources.js";
 /** @typedef {import('./types.js').Skin} Skin */
 
 /** Validate untrusted JSON before constructing images, arrays or physics bodies.
@@ -213,9 +214,9 @@ export async function loadSkin(url) {
     return config;
   }
   const absolute = new URL(url, location.href);
-  const response = await fetch(absolute);
-  if (!response.ok) throw new Error(`无法读取皮肤 (${response.status})`);
-  const config = validateSkin(await response.json());
+  const config = validateSkin(
+    await fetchResource(absolute, (response) => response.json()),
+  );
   config.items = config.items.map((item) => ({
     ...item,
     image: new URL(item.image, absolute).href,
@@ -236,6 +237,15 @@ export async function loadLocalSkin(files) {
   const images = new Map();
   for (const [name, data] of Object.entries(offline?.images || {}))
     images.set(name.split("/").pop() || name, /** @type {string} */ (data));
+  // Online play no longer downloads the offline bundle. Keep JSON-only imports
+  // working by resolving the shipped skin's images to their normal URLs.
+  if (!offline && location.protocol !== "file:") {
+    const defaults = await loadSkin("./config/merge/default.json");
+    for (const item of defaults.items) {
+      const name = new URL(item.image).pathname.split("/").pop() || "";
+      images.set(decodeURIComponent(name), item.image);
+    }
+  }
   const selectedNames = new Set();
   for (const file of files.filter((file) =>
     file.name.toLowerCase().endsWith(".png"),
