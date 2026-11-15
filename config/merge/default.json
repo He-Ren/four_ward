@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "name": "合成五哥",
+  "world": {
+    "width": 10,
+    "height": 15,
+    "dangerY": 2.6,
+    "spawnY": 1.7,
+    "wallThickness": 0.6
+  },
+  "rules": {
+    "n": 9,
+    "m": 5,
+    "dropCooldown": 0.45,
+    "mergeCooldown": 0.12,
+    "overflowGrace": 1.8,
+    "newbornGrace": 1.2,
+    "maxBodies": 120,
+    "keyboardStep": 0.3,
+    "avoidRepeat": true,
+    "repeatRetries": 6
+  },
+  "items": [
+    {
+      "name": "绿色圆形",
+      "image": "../../assets/stickers/sticker1_remove_edge.png",
+      "size": 1.05,
+      "weight": 28,
+      "score": 0
+    },
+    {
+      "name": "粉色五边形",
+      "image": "../../assets/stickers/sticker2_remove_edge.png",
+      "size": 1.4,
+      "weight": 24,
+      "score": 10
+    },
+    {
+      "name": "蓝色六边形",
+      "image": "../../assets/stickers/sticker3_remove_edge.png",
+      "size": 1.8,
+      "weight": 20,
+      "score": 30
+    },
+    {
+      "name": "人物头像",
+      "image": "../../assets/stickers/sticker4_remove_edge.png",
+      "size": 2.2,
+      "weight": 16,
+      "score": 60
+    },
+    {
+      "name": "狐狸头像",
+      "image": "../../assets/stickers/sticker5_remove_edge.png",
+      "size": 2.6,
+      "weight": 12,
+      "score": 100
+    },
+    {
+      "name": "小形态",
+      "image": "../../assets/stickers/form1.png",
+      "size": 3.1,
+      "weight": 0,
+      "score": 160
+    },
+    {
+      "name": "骑士形态",
+      "image": "../../assets/stickers/form2.png",
+      "size": 3.65,
+      "weight": 0,
+      "score": 250
+    },
+    {
+      "name": "Logo",
+      "image": "../../assets/stickers/sticker_logo.png",
+      "size": 4.3,
+      "weight": 0,
+      "score": 400
+    },
+    {
+      "name": "五哥",
+      "image": "../../assets/stickers/wu_ge.png",
+      "size": 5.1,
+      "weight": 0,
+      "score": 650
+    }
+  ],
+  "theme": {
+    "background": "#f7f5ee",
+    "surface": "#fffdf8",
+    "ink": "#253d37",
+    "accent": "#507862",
+    "danger": "#cf705b"
+  },
+  "physics": {
+    "unitsPerWorldUnit": 100,
+    "fixedHz": 60,
+    "maxSubSteps": 5,
+    "maxFrameDelta": 0.1,
+    "gravity": 22,
+    "restitution": 0.42,
+    "friction": 0.35,
+    "frictionStatic": 0.9,
+    "airDrag": 0.012,
+    "density": 0.001,
+    "slop": 0.004,
+    "positionIterations": 8,
+    "velocityIterations": 6,
+    "sleepFrames": 75,
+    "maxSpeed": 22,
+    "bounceThreshold": 1.2
+  },
+  "jelly": {
+    "enabled": true,
+    "maxStrain": 0.2,
+    "stiffness": 120,
+    "damping": 8,
+    "impactGain": 0.5,
+    "minImpactSpeed": 1.2,
+    "impactCooldown": 0.22,
+    "restCompression": 0.012,
+    "settleEpsilon": 0.001,
+    "scaleEpsilon": 0.001,
+    "restResponse": 10,
+    "restDeadband": 0.002
+  },
+  "collision": {
+    "resolution": 48,
+    "alphaThreshold": 16,
+    "simplifyTolerance": 1,
+    "maxParts": 96
+  },
+  "rendering": {
+    "maxDpr": 2,
+    "guideDash": 0.12,
+    "lineWidth": 0.025,
+    "particleCount": 18,
+    "particleLifetime": 1.4,
+    "particleSpeed": 4,
+    "particleMinLifetimeRatio": 0.6785714285714286,
+    "particleMinSpeedRatio": 0.35,
+    "particleOpacityMin": 0.9,
+    "particleOpacityMax": 0.9,
+    "particleGravity": 8,
+    "maxParticles": 512
+  },
+  "mergeBurst": {
+    "enabled": true,
+    "rangeMultiplier": 1.35,
+    "rangePadding": 0.7,
+    "speed": 14,
+    "upwardBias": 1.1,
+    "massExponent": 0.5,
+    "minMassScale": 0.35,
+    "maxMassScale": 1.5,
+    "spin": 0.06,
+    "strainKick": 2,
+    "victorySeconds": 0.8
+  }
+}

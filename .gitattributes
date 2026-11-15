@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.mp3 binary
+*.wav binary
+
+# Keep vendor license formatting intact; review editable modules, not bundles.
+src/merge/vendor.js linguist-vendored -whitespace
+src/merge/matter-types.d.ts linguist-vendored
+src/merge/game.js linguist-generated -whitespace
+src/merge/offline-data.js linguist-generated

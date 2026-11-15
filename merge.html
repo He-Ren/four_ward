@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f7f5ee" />
+    <meta
+      name="description"
+      content="找个位置，轻轻放下。一个会弹一弹的合成小游戏。"
+    />
+    <title>合成五哥</title>
+    <link rel="icon" href="assets/stickers/sticker_logo.png" type="image/png" />
+    <link rel="stylesheet" href="src/merge/styles.css" />
+    <script defer src="src/merge/offline-data.js"></script>
+    <script defer src="src/merge/game.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <a
+          class="brand"
+          href="merge.html"
+          aria-label="4Ward 学生节 · 合成五哥首页"
+          ><span class="brand-mark" aria-hidden="true">伍</span
+          ><span>4Ward <small>学生节</small></span></a
+        >
+        <div class="actions">
+          <button id="pause" type="button" disabled>暂停</button
+          ><button id="restart" type="button" disabled>
+            重新开始 <span aria-hidden="true">↻</span>
+          </button>
+        </div>
+      </header>
+      <div class="heading">
+        <p class="eyebrow">从一小步，到一个惊喜</p>
+        <h1>合成五哥</h1>
+        <p class="subtitle">找个位置，轻轻放下。</p>
+      </div>
+      <main class="game-layout">
+        <aside class="left-panel">
+          <div class="score-card">
+            <span class="label">本局得分</span><strong id="score">0</strong>
+            <div class="best">个人最佳 <span id="best">0</span></div>
+          </div>
+          <div class="instructions">
+            <span class="section-number">01 / 玩法说明</span>
+            <h2>碰在一起，<br />长大一点。</h2>
+            <p>相同图形相碰就会合成，<br />合成第九阶即可领取奖励。</p>
+            <p class="input-help">
+              移动鼠标瞄准，点击放下。<br />手机上拖动瞄准，松手放下。
+            </p>
+            <span class="keyboard-hint">← → 瞄准 · 空格放下</span>
+          </div>
+        </aside>
+        <section class="arena-slot" aria-label="合成游戏">
+          <div id="board" class="board">
+            <canvas
+              id="game"
+              tabindex="0"
+              aria-label="合成游戏区域。左右方向键瞄准，空格或回车放下物品，P 键暂停。"
+            ></canvas>
+            <div id="overlay" class="overlay" role="status">
+              <div class="overlay-card">
+                <span id="overlay-icon" class="overlay-icon">···</span>
+                <h2 id="overlay-title">准备一点小快乐</h2>
+                <p id="overlay-message">正在加载皮肤与物品…</p>
+                <button id="overlay-action" type="button" hidden>
+                  再玩一次
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <aside class="right-panel">
+          <div class="next-card">
+            <span class="label">下一个</span
+            ><img id="next-image" alt="下一个物品" hidden />
+          </div>
+          <div class="evolution">
+            <span class="section-number">02 / 成长路线</span>
+            <h2>成长路线</h2>
+            <ol id="progression"></ol>
+            <p>合成第九阶，向工作人员展示领奖。</p>
+          </div>
+          <div class="tip">
+            <span aria-hidden="true">✳</span>
+            <p>给它一点空间，<br />也给惊喜一点时间。</p>
+          </div>
+        </aside>
+      </main>
+      <footer>
+        <span class="live-dot" aria-hidden="true"></span
+        ><span id="status" aria-live="polite">正在准备…</span
+        ><span class="footer-note">慢一点，也没关系。</span>
+        <button
+          id="import-skin"
+          type="button"
+          title="选择皮肤 JSON 和对应 PNG，可同时多选"
+        >
+          导入皮肤
+        </button>
+        <input
+          id="skin-files"
+          type="file"
+          accept=".json,.png,application/json,image/png"
+          multiple
+          hidden
+        />
+      </footer>
+    </div>
+    <dialog
+      id="reward-dialog"
+      class="reward-dialog"
+      aria-labelledby="reward-title"
+      aria-describedby="reward-message"
+    >
+      <p class="reward-theme">4Ward 学生节</p>
+      <img id="reward-image" class="reward-image" alt="本局最高阶图形" />
+      <h2 id="reward-title" tabindex="-1">你合成了五哥！</h2>
+      <p id="reward-message">将此页面展示给工作人员以获取奖励</p>
+      <button id="reward-restart" type="button">领奖后重新开始</button>
+    </dialog>
+  </body>
+</html>
