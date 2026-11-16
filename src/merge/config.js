@@ -74,6 +74,8 @@ export function validateSkin(input) {
     "keyboardStep",
   ])
     number(Reflect.get(c.rules, key), `rules.${key}`, 0.01, 60);
+  c.rules.overflowMaxSpeed ??= 1.2;
+  number(c.rules.overflowMaxSpeed, "rules.overflowMaxSpeed", 0.01, 60);
   number(c.rules.maxBodies, "rules.maxBodies", 2, 500);
   integer(c.rules.maxBodies, "rules.maxBodies");
   // Older imported skins keep their original independent draws and no burst.

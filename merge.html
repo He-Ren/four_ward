@@ -10,8 +10,8 @@
     <meta name="description" content="一个会弹一弹的合成小游戏。" />
     <title>合成小红帽</title>
     <link rel="icon" href="assets/stickers/sticker_logo.png" type="image/png" />
-    <link rel="stylesheet" href="src/merge/styles.css?v=credits-1" />
-    <script defer src="src/merge/boot.js?v=credits-1"></script>
+    <link rel="stylesheet" href="src/merge/styles.css?v=continue-win-1" />
+    <script defer src="src/merge/boot.js?v=continue-win-1"></script>
   </head>
   <body data-state="loading">
     <div class="app">
@@ -55,10 +55,10 @@
                   aria-hidden="true"
                 ></span>
                 <img
-                  id="pause-image"
-                  class="pause-image"
-                  src="assets/stickers/form1.png"
-                  alt="小红帽"
+                  id="state-image"
+                  class="state-image"
+                  src="assets/stickers/sticker3.png"
+                  alt="暂停"
                   loading="lazy"
                   hidden
                 />
@@ -105,7 +105,7 @@
       <img id="reward-image" class="reward-image" alt="本局最高阶图形" />
       <h2 id="reward-title" tabindex="-1">你合成了小红帽！</h2>
       <p id="reward-message">将此页面展示给工作人员以获取奖励</p>
-      <button id="reward-restart" type="button">领奖后重新开始</button>
+      <button id="reward-continue" type="button">继续游戏</button>
     </dialog>
   </body>
 </html>

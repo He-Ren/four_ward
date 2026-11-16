@@ -8,7 +8,7 @@
  * @property {number} version
  * @property {string} name
  * @property {{width:number, height:number, dangerY:number, spawnY:number, wallThickness:number}} world
- * @property {{n:number, m:number, dropCooldown:number, mergeCooldown:number, overflowGrace:number, newbornGrace:number, maxBodies:number, keyboardStep:number, avoidRepeat:boolean, repeatRetries:number}} rules
+ * @property {{n:number, m:number, dropCooldown:number, mergeCooldown:number, overflowGrace:number, overflowMaxSpeed:number, newbornGrace:number, maxBodies:number, keyboardStep:number, avoidRepeat:boolean, repeatRetries:number}} rules
  * @property {{enabled:boolean,rangeMultiplier:number,rangePadding:number,speed:number,upwardBias:number,massExponent:number,minMassScale:number,maxMassScale:number,spin:number,strainKick:number,victorySeconds:number}} mergeBurst
  * @property {ItemConfig[]} items
  * @property {{background:string, surface:string, ink:string, accent:string, danger:string}} theme
@@ -19,6 +19,6 @@
  */
 /** @typedef {{image:HTMLCanvasElement, polygons:Point[][], width:number, height:number, center:Point, source:string, particleColors:string[]}} Sprite */
 /** @typedef {{x:number,y:number,vx:number,vy:number,age:number,life:number,color:string,opacity:number}} Particle */
-/** @typedef {{body:import('./matter-types.js').Body, level:number, born:number, touched:boolean, overflow:number, strain:number, strainVelocity:number, restStrain:number, contactStrain:number, contactCount:number, lastImpact:number, appliedStrain:number}} Piece */
+/** @typedef {{body:import('./matter-types.js').Body, level:number, born:number, overflow:number, strain:number, strainVelocity:number, restStrain:number, contactStrain:number, contactCount:number, lastImpact:number, appliedStrain:number}} Piece */
 /** @typedef {{type:'drop'|'merge'|'bounce'|'win'|'lose'|'reset', x:number, y:number, level:number, strength:number}} GameEvent */
 export {};

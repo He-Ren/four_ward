@@ -290,7 +290,7 @@ h2 {
   font: italic 52px Georgia;
   color: var(--accent);
 }
-.pause-image {
+.state-image {
   display: block;
   width: 120px;
   height: 150px;

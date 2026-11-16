@@ -279,3 +279,119 @@ test("velocity snapshots are released on merge, reset and disposal", () => {
   assert.equal(game.pieces.size, 0);
   assert.equal(game.mergeQueue.size, 0);
 });
+
+test("victory continues with score and pieces intact; largest pieces never merge", () => {
+  const game = fixture();
+  const events = [];
+  game.subscribe((e) => events.push(e.type));
+  game.addPiece(7, 4.4, 12);
+  game.addPiece(7, 5.6, 12);
+  advance(game, 1);
+  const pieces = [...game.pieces.values()];
+  const score = game.score;
+  assert.equal(game.continueAfterWin(), true);
+  assert.deepEqual([...game.pieces.values()], pieces);
+  assert.equal(game.score, score);
+  assert.equal(game.drop(1), true);
+  game.addPiece(7, 3.5, 5);
+  game.addPiece(7, 4.5, 5);
+  advance(game, 1);
+  assert.equal(game.state, "playing");
+  assert.equal(events.filter((type) => type === "win").length, 1);
+  assert.equal(
+    [...game.pieces.values()].filter((p) => p.level === 8).length,
+    2,
+  );
+  advance(game, 3);
+  assert.equal(
+    [...game.pieces.values()].filter((p) => p.level === 8).length,
+    2,
+  );
+  assert.equal(game.score, score * 2);
+  game.reset();
+  assert.equal(game.hasWon, false);
+  game.destroy();
+});
+
+test("slow wall-brushing fall cannot lose before landing", () => {
+  const game = fixture();
+  game.config.world.dangerY = 14.9;
+  game.engine.gravity.scale *= 0.001;
+  const piece = game.addPiece(0, 0.4, 2);
+  advance(game, 5);
+  assert.equal(game.state, "playing");
+  assert.equal(piece.overflow, 0);
+  assert.ok(piece.body.position.y / game.unit < 4, "still airborne");
+  game.destroy();
+});
+
+test("airborne contacts and airborne merges do not count as landing", () => {
+  const game = fixture();
+  game.config.world.dangerY = 14.9;
+  game.engine.gravity.scale = 0;
+  game.config.mergeBurst.enabled = false;
+  game.addPiece(0, 4.5, 2);
+  game.addPiece(0, 5.4, 2);
+  advance(game, 5);
+  assert.equal(game.pieces.size, 1);
+  assert.equal(game.state, "playing");
+  assert.equal([...game.pieces.values()][0].overflow, 0);
+  game.destroy();
+});
+
+test("launching a grounded piece resets overflow until it lands again", () => {
+  const game = fixture();
+  game.config.world.dangerY = 14.9;
+  const piece = game.addPiece(0, 5, 14);
+  advance(game, 2);
+  assert.ok(piece.overflow > 0);
+  Matter.Sleeping.set(piece.body, false);
+  Matter.Body.setVelocity(piece.body, { x: 0, y: (-10 * game.unit) / 60 });
+  advance(game, 0.1);
+  assert.equal(piece.overflow, 0);
+  assert.equal(game.state, "playing");
+  advance(game, 6);
+  assert.equal(game.state, "lost");
+  game.destroy();
+});
+
+test("sleeping piles transmit floor support and still lose when settled above line", () => {
+  const game = fixture();
+  game.config.world.dangerY = 13.5;
+  game.addPiece(2, 5, 14);
+  game.addPiece(0, 5, 12);
+  advance(game, 8);
+  assert.equal(game.state, "lost");
+  game.destroy();
+});
+
+test("body limit blocks a drop without declaring an airborne loss", () => {
+  const game = fixture();
+  game.config.rules.maxBodies = 2;
+  game.addPiece(0, 2, 5);
+  game.addPiece(1, 8, 5);
+  assert.equal(game.drop(5), false);
+  assert.equal(game.state, "playing");
+  assert.equal(game.pieces.size, 2);
+  game.destroy();
+});
+
+test("two largest stickers physically collide without merging or scoring", () => {
+  const game = fixture();
+  const a = game.addPiece(8, 3, 12);
+  const b = game.addPiece(8, 7, 12);
+  let contact = false;
+  Matter.Events.on(game.engine, "collisionStart", (event) => {
+    contact ||= event.pairs.some(
+      (pair) =>
+        [pair.bodyA.parent.id, pair.bodyB.parent.id].includes(a.body.id) &&
+        [pair.bodyA.parent.id, pair.bodyB.parent.id].includes(b.body.id),
+    );
+  });
+  advance(game, 3);
+  assert.equal(contact, true);
+  assert.equal(game.pieces.size, 2);
+  assert.equal(game.score, 0);
+  assert.equal(game.state, "playing");
+  game.destroy();
+});

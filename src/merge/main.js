@@ -17,15 +17,15 @@ const overlay = element("overlay"),
   message = element("overlay-message"),
   icon = element("overlay-icon");
 const action = /** @type {HTMLButtonElement} */ (element("overlay-action"));
-const pauseImage = element("pause-image");
+const stateImage = /** @type {HTMLImageElement} */ (element("state-image"));
 const pauseButton = /** @type {HTMLButtonElement} */ (element("pause"));
 const restartButton = /** @type {HTMLButtonElement} */ (element("restart"));
 const rewardDialog = /** @type {HTMLDialogElement} */ (
   element("reward-dialog")
 );
 const rewardImage = /** @type {HTMLImageElement} */ (element("reward-image"));
-const rewardRestart = /** @type {HTMLButtonElement} */ (
-  element("reward-restart")
+const rewardContinue = /** @type {HTMLButtonElement} */ (
+  element("reward-continue")
 );
 
 let dispose = () => {};
@@ -91,8 +91,9 @@ async function start() {
     nextImage.alt = `下一个：第 ${game.next + 1} 阶`;
     pauseButton.textContent = paused ? "继续" : "暂停";
     pauseButton.disabled = game.state !== "playing";
-    pauseImage.hidden = !(paused && game.state === "playing");
-    icon.hidden = !pauseImage.hidden;
+    stateImage.hidden =
+      !(paused && game.state === "playing") && game.state !== "lost";
+    icon.hidden = !stateImage.hidden;
     if (game.state === "won") {
       overlay.hidden = true;
       if (!rewardDialog.open) {
@@ -105,13 +106,16 @@ async function start() {
       overlay.hidden = false;
       action.hidden = false;
       if (paused && game.state === "playing") {
+        stateImage.src = "assets/stickers/sticker3.png";
+        stateImage.alt = "暂停";
         title.textContent = "小红帽开小差中";
         message.textContent = "游戏已暂停";
         action.textContent = "继续游戏";
       } else {
-        icon.textContent = "↻";
+        stateImage.src = "assets/stickers/sticker1.png";
+        stateImage.alt = "本局结束";
         title.textContent = "已经装得满满当当";
-        message.textContent = `本局 ${game.score} 分，再试一种摆法吧。`;
+        message.textContent = `本局 ${game.score} 分，再试一次吧`;
         action.textContent = "再玩一次";
       }
     }
@@ -162,7 +166,15 @@ async function start() {
   });
   pauseButton.onclick = pause;
   restartButton.onclick = restart;
-  rewardRestart.onclick = restart;
+  rewardContinue.onclick = () => {
+    if (!game.continueAfterWin()) return;
+    rewardDialog.close();
+    paused = false;
+    accumulator = 0;
+    lastTime = performance.now();
+    sync();
+    canvas.focus({ preventScroll: true });
+  };
   action.onclick = () => {
     if (paused && game.state === "playing") {
       pause();
@@ -230,7 +242,7 @@ async function start() {
 function showError(error) {
   console.error(error);
   overlay.hidden = false;
-  pauseImage.hidden = true;
+  stateImage.hidden = true;
   icon.hidden = false;
   icon.textContent = "!";
   title.textContent = "暂时没能开始";

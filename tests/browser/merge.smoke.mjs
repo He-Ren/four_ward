@@ -61,6 +61,15 @@ try {
         await page.locator("body").getAttribute("data-state"),
         "paused",
       );
+      assert.ok(
+        (await page.locator("#state-image").getAttribute("src")).endsWith(
+          "/sticker3.png",
+        ),
+      );
+      await page.waitForFunction(() => {
+        const image = document.getElementById("state-image");
+        return !image.hidden && image.complete && image.naturalWidth > 0;
+      });
       await page.locator("#restart").click();
       assert.equal(
         await page.evaluate(() => window.__merge.game.pieces.size),
@@ -99,11 +108,48 @@ try {
         await page.locator("#reward-dialog").evaluate((dialog) => dialog.open),
         true,
       );
-      await page.locator("#reward-restart").click();
+      const beforeContinue = await page.evaluate(() => ({
+        score: window.__merge.game.score,
+        ids: [...window.__merge.game.pieces.keys()],
+      }));
+      assert.equal(
+        await page.locator("#reward-continue").textContent(),
+        "继续游戏",
+      );
+      await page.locator("#reward-continue").click();
       assert.equal(
         await page.evaluate(() => window.__merge.game.state),
         "playing",
       );
+      assert.deepEqual(
+        await page.evaluate(() => ({
+          score: window.__merge.game.score,
+          ids: [...window.__merge.game.pieces.keys()],
+        })),
+        beforeContinue,
+      );
+      assert.equal(
+        await page.locator("#reward-dialog").evaluate((dialog) => dialog.open),
+        false,
+      );
+      if (mobile) await canvas.tap();
+      else await canvas.click();
+      assert.equal(await page.evaluate(() => window.__merge.game.drops), 1);
+      await page.evaluate(() => window.__merge.game.finish("lost"));
+      assert.ok(
+        (await page.locator("#state-image").getAttribute("src")).endsWith(
+          "/sticker1.png",
+        ),
+      );
+      await page.waitForFunction(() => {
+        const image = document.getElementById("state-image");
+        return !image.hidden && image.complete && image.naturalWidth > 0;
+      });
+      assert.equal(
+        await page.locator("#overlay-message").textContent(),
+        `本局 ${beforeContinue.score} 分，再试一次吧`,
+      );
+      await page.locator("#overlay-action").click();
       assert.equal(
         await page.evaluate(() => window.__merge.game.pieces.size),
         0,

@@ -30,6 +30,7 @@ test("skin validates sizes, counts, numeric values and weighted spawn range", ()
     (c) => (c.rules.m = c.rules.n),
     (c) => (c.items[1].size = 0.5),
     (c) => (c.physics.gravity = NaN),
+    (c) => (c.rules.overflowMaxSpeed = -1),
     (c) => c.items.forEach((i) => (i.weight = 0)),
   ]) {
     const config = skin();
@@ -84,4 +85,11 @@ test("repeat avoidance has a bounded fallback and an independent mode", () => {
   validateSkin(old);
   assert.equal(old.rules.avoidRepeat, false);
   assert.equal(old.mergeBurst.enabled, false);
+});
+
+test("older skins receive a finite overflow speed threshold", () => {
+  const config = skin();
+  delete config.rules.overflowMaxSpeed;
+  validateSkin(config);
+  assert.equal(config.rules.overflowMaxSpeed, 1.2);
 });

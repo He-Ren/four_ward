@@ -208,6 +208,8 @@ function validateSkin(input) {
     "keyboardStep",
   ])
     number(Reflect.get(c.rules, key), `rules.${key}`, 0.01, 60);
+  c.rules.overflowMaxSpeed ??= 1.2;
+  number(c.rules.overflowMaxSpeed, "rules.overflowMaxSpeed", 0.01, 60);
   number(c.rules.maxBodies, "rules.maxBodies", 2, 500);
   integer(c.rules.maxBodies, "rules.maxBodies");
   // Older imported skins keep their original independent draws and no burst.
@@ -799,6 +801,8 @@ const { centerOfMass } = modules["geometry"];
 const MILLISECONDS_PER_SECOND = 1000;
 // Matter normalizes velocities to a 60 Hz base tick, independent of fixedHz.
 const MATTER_BASE_HZ = 60;
+// Ignore near-horizontal contacts: brushing a wall is not landing.
+const MIN_SUPPORT_NORMAL_Y = 0.25;
 const STATIC_VELOCITY = Object.freeze({ x: 0, y: 0 });
 const { Engine, Body, Bodies, Composite, Events, Sleeping } = Matter;
 /** @param {number} value @param {number} min @param {number} max */
@@ -865,6 +869,7 @@ class MergeWorld {
     this.mergeQueue.clear();
     this.velocities.clear();
     this.state = "playing";
+    this.hasWon = false;
     this.time = 0;
     this.celebrationRemaining = 0;
     this.score = 0;
@@ -900,7 +905,7 @@ class MergeWorld {
         (height + t / 2) * u,
         (width + 2 * t) * u,
         t * u,
-        options,
+        { ...options, label: "floor" },
       ),
     ]);
     this.emit({ type: "reset", x: 0, y: 0, level: 0, strength: 0 });
@@ -921,16 +926,13 @@ class MergeWorld {
   get canDrop() {
     return (
       this.state === "playing" &&
+      this.pieces.size < this.config.rules.maxBodies &&
       this.time - this.lastDrop >= this.config.rules.dropCooldown
     );
   }
   /** @param {number} x */
   drop(x) {
     if (!this.canDrop) return false;
-    if (this.pieces.size >= this.config.rules.maxBodies) {
-      this.finish("lost");
-      return false;
-    }
     const level = this.current;
     this.addPiece(level, this.clampX(x), this.config.world.spawnY);
     this.lastDrop = this.time;
@@ -989,7 +991,6 @@ class MergeWorld {
       body,
       level,
       born: this.time,
-      touched: false,
       overflow: 0,
       strain: 0,
       strainVelocity: 0,
@@ -1009,8 +1010,6 @@ class MergeWorld {
     for (const pair of pairs) {
       const a = this.pieces.get(pair.bodyA.parent.id),
         b = this.pieces.get(pair.bodyB.parent.id);
-      if (a) a.touched = true;
-      if (b) b.touched = true;
       const normal = pair.collision.normal;
       for (const piece of [a, b])
         if (piece && !piece.body.isSleeping) {
@@ -1254,17 +1253,17 @@ class MergeWorld {
           this.config.world.height - (sprite.height - sprite.center.y),
         ),
       );
-      merged.touched = true;
       Body.setVelocity(merged.body, { x: vx, y: vy });
       bursts.push(merged);
       this.score += this.config.items[level].score;
       this.emit({ type: "merge", x, y, level, strength: 1 });
-      if (level === this.config.rules.n - 1) this.finish("won");
+      if (level === this.config.rules.n - 1 && !this.hasWon) this.finish("won");
     }
     this.mergeQueue.clear();
     // Apply once per successful merge, after the full merge transaction.
     for (const source of bursts)
       if (this.pieces.has(source.body.id)) this.burst(source);
+    /** @type {Set<number> | undefined} */ let supported;
     for (const piece of this.pieces.values()) {
       const speed = (piece.body.speed * MATTER_BASE_HZ) / this.unit;
       if (speed > this.config.physics.maxSpeed) {
@@ -1277,8 +1276,20 @@ class MergeWorld {
       const oldEnough = this.time - piece.born > this.config.rules.newbornGrace;
       const above =
         piece.body.bounds.min.y / this.unit < this.config.world.dangerY;
+      const surfaceSpeed =
+        speed +
+        Math.abs(piece.body.angularVelocity) *
+          MATTER_BASE_HZ *
+          this.radii[piece.level] *
+          Math.exp(Math.abs(piece.appliedStrain));
       piece.overflow =
-        piece.touched && oldEnough && above ? piece.overflow + dt : 0;
+        this.state === "playing" &&
+        oldEnough &&
+        above &&
+        surfaceSpeed <= this.config.rules.overflowMaxSpeed &&
+        (supported ??= this.supportedBodies()).has(piece.body.id)
+          ? piece.overflow + dt
+          : 0;
       if (
         piece.overflow >= this.config.rules.overflowGrace &&
         this.state === "playing"
@@ -1286,8 +1297,56 @@ class MergeWorld {
         this.finish("lost");
     }
   }
+  /** Follow current support contacts from the floor through the pile.
+   * Historical touches and contacts between airborne pieces do not qualify.
+   * @returns {Set<number>} */
+  supportedBodies() {
+    /** @type {Map<number, number[]>} */ const above = new Map();
+    const floor = this.engine.world.bodies.find(
+      (body) => body.label === "floor",
+    );
+    const supported = new Set(floor ? [floor.id] : []);
+    for (const pair of this.engine.pairs.list) {
+      const a = pair.bodyA.parent,
+        b = pair.bodyB.parent;
+      // Matter retains sleeping contacts but marks them inactive. They still
+      // support the pile while both bodies remain immobile and overlapping.
+      const restingContact =
+        (a.isStatic || a.isSleeping) &&
+        (b.isStatic || b.isSleeping) &&
+        Matter.Bounds.overlaps(a.bounds, b.bounds);
+      if (
+        (!pair.isActive && !restingContact) ||
+        Math.abs(pair.collision.normal.y) < MIN_SUPPORT_NORMAL_Y
+      )
+        continue;
+      const lower = pair.collision.normal.y > 0 ? a : b;
+      const upper = lower === a ? b : a;
+      if (
+        !this.pieces.has(upper.id) ||
+        (!this.pieces.has(lower.id) && lower !== floor)
+      )
+        continue;
+      let children = above.get(lower.id);
+      if (!children) above.set(lower.id, (children = []));
+      children.push(upper.id);
+    }
+    // Set iteration visits newly added entries, so traversal is linear in contacts.
+    for (const id of supported)
+      for (const child of above.get(id) || []) supported.add(child);
+    return supported;
+  }
+  /** Keep the board and score after acknowledging the first victory. */
+  continueAfterWin() {
+    if (this.state !== "won") return false;
+    this.state = "playing";
+    this.celebrationRemaining = 0;
+    for (const piece of this.pieces.values()) piece.overflow = 0;
+    return true;
+  }
   /** @param {'won'|'lost'} state */
   finish(state) {
+    if (state === "won") this.hasWon = true;
     this.state = state;
     this.celebrationRemaining =
       state === "won" && this.config.mergeBurst.enabled
@@ -2039,15 +2098,15 @@ const overlay = element("overlay"),
   message = element("overlay-message"),
   icon = element("overlay-icon");
 const action = /** @type {HTMLButtonElement} */ (element("overlay-action"));
-const pauseImage = element("pause-image");
+const stateImage = /** @type {HTMLImageElement} */ (element("state-image"));
 const pauseButton = /** @type {HTMLButtonElement} */ (element("pause"));
 const restartButton = /** @type {HTMLButtonElement} */ (element("restart"));
 const rewardDialog = /** @type {HTMLDialogElement} */ (
   element("reward-dialog")
 );
 const rewardImage = /** @type {HTMLImageElement} */ (element("reward-image"));
-const rewardRestart = /** @type {HTMLButtonElement} */ (
-  element("reward-restart")
+const rewardContinue = /** @type {HTMLButtonElement} */ (
+  element("reward-continue")
 );
 
 let dispose = () => {};
@@ -2113,8 +2172,9 @@ async function start() {
     nextImage.alt = `下一个：第 ${game.next + 1} 阶`;
     pauseButton.textContent = paused ? "继续" : "暂停";
     pauseButton.disabled = game.state !== "playing";
-    pauseImage.hidden = !(paused && game.state === "playing");
-    icon.hidden = !pauseImage.hidden;
+    stateImage.hidden =
+      !(paused && game.state === "playing") && game.state !== "lost";
+    icon.hidden = !stateImage.hidden;
     if (game.state === "won") {
       overlay.hidden = true;
       if (!rewardDialog.open) {
@@ -2127,13 +2187,16 @@ async function start() {
       overlay.hidden = false;
       action.hidden = false;
       if (paused && game.state === "playing") {
+        stateImage.src = "assets/stickers/sticker3.png";
+        stateImage.alt = "暂停";
         title.textContent = "小红帽开小差中";
         message.textContent = "游戏已暂停";
         action.textContent = "继续游戏";
       } else {
-        icon.textContent = "↻";
+        stateImage.src = "assets/stickers/sticker1.png";
+        stateImage.alt = "本局结束";
         title.textContent = "已经装得满满当当";
-        message.textContent = `本局 ${game.score} 分，再试一种摆法吧。`;
+        message.textContent = `本局 ${game.score} 分，再试一次吧`;
         action.textContent = "再玩一次";
       }
     }
@@ -2184,7 +2247,15 @@ async function start() {
   });
   pauseButton.onclick = pause;
   restartButton.onclick = restart;
-  rewardRestart.onclick = restart;
+  rewardContinue.onclick = () => {
+    if (!game.continueAfterWin()) return;
+    rewardDialog.close();
+    paused = false;
+    accumulator = 0;
+    lastTime = performance.now();
+    sync();
+    canvas.focus({ preventScroll: true });
+  };
   action.onclick = () => {
     if (paused && game.state === "playing") {
       pause();
@@ -2252,7 +2323,7 @@ async function start() {
 function showError(error) {
   console.error(error);
   overlay.hidden = false;
-  pauseImage.hidden = true;
+  stateImage.hidden = true;
   icon.hidden = false;
   icon.textContent = "!";
   title.textContent = "暂时没能开始";

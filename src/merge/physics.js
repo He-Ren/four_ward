@@ -9,6 +9,8 @@ import { centerOfMass } from "./geometry.js";
 const MILLISECONDS_PER_SECOND = 1000;
 // Matter normalizes velocities to a 60 Hz base tick, independent of fixedHz.
 const MATTER_BASE_HZ = 60;
+// Ignore near-horizontal contacts: brushing a wall is not landing.
+const MIN_SUPPORT_NORMAL_Y = 0.25;
 const STATIC_VELOCITY = Object.freeze({ x: 0, y: 0 });
 const { Engine, Body, Bodies, Composite, Events, Sleeping } = Matter;
 /** @param {number} value @param {number} min @param {number} max */
@@ -75,6 +77,7 @@ export class MergeWorld {
     this.mergeQueue.clear();
     this.velocities.clear();
     this.state = "playing";
+    this.hasWon = false;
     this.time = 0;
     this.celebrationRemaining = 0;
     this.score = 0;
@@ -110,7 +113,7 @@ export class MergeWorld {
         (height + t / 2) * u,
         (width + 2 * t) * u,
         t * u,
-        options,
+        { ...options, label: "floor" },
       ),
     ]);
     this.emit({ type: "reset", x: 0, y: 0, level: 0, strength: 0 });
@@ -131,16 +134,13 @@ export class MergeWorld {
   get canDrop() {
     return (
       this.state === "playing" &&
+      this.pieces.size < this.config.rules.maxBodies &&
       this.time - this.lastDrop >= this.config.rules.dropCooldown
     );
   }
   /** @param {number} x */
   drop(x) {
     if (!this.canDrop) return false;
-    if (this.pieces.size >= this.config.rules.maxBodies) {
-      this.finish("lost");
-      return false;
-    }
     const level = this.current;
     this.addPiece(level, this.clampX(x), this.config.world.spawnY);
     this.lastDrop = this.time;
@@ -199,7 +199,6 @@ export class MergeWorld {
       body,
       level,
       born: this.time,
-      touched: false,
       overflow: 0,
       strain: 0,
       strainVelocity: 0,
@@ -219,8 +218,6 @@ export class MergeWorld {
     for (const pair of pairs) {
       const a = this.pieces.get(pair.bodyA.parent.id),
         b = this.pieces.get(pair.bodyB.parent.id);
-      if (a) a.touched = true;
-      if (b) b.touched = true;
       const normal = pair.collision.normal;
       for (const piece of [a, b])
         if (piece && !piece.body.isSleeping) {
@@ -464,17 +461,17 @@ export class MergeWorld {
           this.config.world.height - (sprite.height - sprite.center.y),
         ),
       );
-      merged.touched = true;
       Body.setVelocity(merged.body, { x: vx, y: vy });
       bursts.push(merged);
       this.score += this.config.items[level].score;
       this.emit({ type: "merge", x, y, level, strength: 1 });
-      if (level === this.config.rules.n - 1) this.finish("won");
+      if (level === this.config.rules.n - 1 && !this.hasWon) this.finish("won");
     }
     this.mergeQueue.clear();
     // Apply once per successful merge, after the full merge transaction.
     for (const source of bursts)
       if (this.pieces.has(source.body.id)) this.burst(source);
+    /** @type {Set<number> | undefined} */ let supported;
     for (const piece of this.pieces.values()) {
       const speed = (piece.body.speed * MATTER_BASE_HZ) / this.unit;
       if (speed > this.config.physics.maxSpeed) {
@@ -487,8 +484,20 @@ export class MergeWorld {
       const oldEnough = this.time - piece.born > this.config.rules.newbornGrace;
       const above =
         piece.body.bounds.min.y / this.unit < this.config.world.dangerY;
+      const surfaceSpeed =
+        speed +
+        Math.abs(piece.body.angularVelocity) *
+          MATTER_BASE_HZ *
+          this.radii[piece.level] *
+          Math.exp(Math.abs(piece.appliedStrain));
       piece.overflow =
-        piece.touched && oldEnough && above ? piece.overflow + dt : 0;
+        this.state === "playing" &&
+        oldEnough &&
+        above &&
+        surfaceSpeed <= this.config.rules.overflowMaxSpeed &&
+        (supported ??= this.supportedBodies()).has(piece.body.id)
+          ? piece.overflow + dt
+          : 0;
       if (
         piece.overflow >= this.config.rules.overflowGrace &&
         this.state === "playing"
@@ -496,8 +505,56 @@ export class MergeWorld {
         this.finish("lost");
     }
   }
+  /** Follow current support contacts from the floor through the pile.
+   * Historical touches and contacts between airborne pieces do not qualify.
+   * @returns {Set<number>} */
+  supportedBodies() {
+    /** @type {Map<number, number[]>} */ const above = new Map();
+    const floor = this.engine.world.bodies.find(
+      (body) => body.label === "floor",
+    );
+    const supported = new Set(floor ? [floor.id] : []);
+    for (const pair of this.engine.pairs.list) {
+      const a = pair.bodyA.parent,
+        b = pair.bodyB.parent;
+      // Matter retains sleeping contacts but marks them inactive. They still
+      // support the pile while both bodies remain immobile and overlapping.
+      const restingContact =
+        (a.isStatic || a.isSleeping) &&
+        (b.isStatic || b.isSleeping) &&
+        Matter.Bounds.overlaps(a.bounds, b.bounds);
+      if (
+        (!pair.isActive && !restingContact) ||
+        Math.abs(pair.collision.normal.y) < MIN_SUPPORT_NORMAL_Y
+      )
+        continue;
+      const lower = pair.collision.normal.y > 0 ? a : b;
+      const upper = lower === a ? b : a;
+      if (
+        !this.pieces.has(upper.id) ||
+        (!this.pieces.has(lower.id) && lower !== floor)
+      )
+        continue;
+      let children = above.get(lower.id);
+      if (!children) above.set(lower.id, (children = []));
+      children.push(upper.id);
+    }
+    // Set iteration visits newly added entries, so traversal is linear in contacts.
+    for (const id of supported)
+      for (const child of above.get(id) || []) supported.add(child);
+    return supported;
+  }
+  /** Keep the board and score after acknowledging the first victory. */
+  continueAfterWin() {
+    if (this.state !== "won") return false;
+    this.state = "playing";
+    this.celebrationRemaining = 0;
+    for (const piece of this.pieces.values()) piece.overflow = 0;
+    return true;
+  }
   /** @param {'won'|'lost'} state */
   finish(state) {
+    if (state === "won") this.hasWon = true;
     this.state = state;
     this.celebrationRemaining =
       state === "won" && this.config.mergeBurst.enabled
