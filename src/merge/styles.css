@@ -299,6 +299,9 @@ h2 {
   margin: 0 auto;
 }
 /* CSS starts before the large game/assets scripts finish loading. */
+body[data-state="loading"] .overlay-card {
+  transform: translateY(-20px);
+}
 body[data-state="loading"] .overlay-icon {
   display: inline-block;
   min-width: 3ch;
