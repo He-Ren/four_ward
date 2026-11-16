@@ -285,6 +285,7 @@ h2 {
 .overlay-card {
   text-align: center;
   max-width: 280px;
+  transform: translateY(-20px);
 }
 .overlay-icon {
   font: italic 52px Georgia;
@@ -299,9 +300,6 @@ h2 {
   margin: 0 auto;
 }
 /* CSS starts before the large game/assets scripts finish loading. */
-body[data-state="loading"] .overlay-card {
-  transform: translateY(-20px);
-}
 body[data-state="loading"] .overlay-icon {
   display: inline-block;
   min-width: 3ch;
@@ -346,6 +344,7 @@ body[data-state="loading"] .overlay-icon::after {
   border-color: var(--danger);
 }
 .reward-dialog {
+  transform: translateY(-20px);
   width: min(420px, calc(100vw - 32px));
   max-height: calc(100svh - 32px);
   overflow: auto;
