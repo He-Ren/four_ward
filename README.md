@@ -315,3 +315,7 @@ node --test tests/*.test.js              # 只运行 Node 内置测试
 所有截图、性能记录、临时素材和本地开发工具放在被忽略的 `test-results/`、`node_modules/` 中。原始贴纸和备用素材保留在 assets 中；默认皮肤只加载 JSON 指定的九张图和三段音频。生成的 `game.js`、`offline-data.js` 必须随源码一起提交，保证下载仓库后能直接双击运行。
 
 本地附带固定版本的 [Matter.js](https://www.brm.io/matter-js/) 和 [Earcut](https://github.com/mapbox/earcut)，许可证见 `THIRD_PARTY_NOTICES.md`。附带的 Matter.js 类型声明许可证位于 `src/merge/MATTER_TYPES_LICENSE.txt`。
+
+## 鸣谢
+
+感谢 [YHSome/BigNaiWa](https://github.com/YHSome/BigNaiWa) 项目提供参考，本项目的随机出图防重复策略和碰撞挤压、回弹表现参考了其中的实现思路。

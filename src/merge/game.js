@@ -2087,8 +2087,7 @@ async function start() {
     /* Private mode may disable storage. */
   }
   const score = element("score"),
-    bestLabel = element("best"),
-    status = element("status");
+    bestLabel = element("best");
   const nextImage = /** @type {HTMLImageElement} */ (element("next-image"));
   const progression = element("progression");
   progression.replaceChildren();
@@ -2118,14 +2117,12 @@ async function start() {
     icon.hidden = !pauseImage.hidden;
     if (game.state === "won") {
       overlay.hidden = true;
-      status.textContent = "合成成功，请向工作人员展示本页领奖";
       if (!rewardDialog.open) {
         rewardDialog.showModal();
         element("reward-title").focus({ preventScroll: true });
       }
     } else if (game.state === "playing" && !paused) {
       overlay.hidden = true;
-      status.textContent = `合成小红帽 · 合成第 ${config.rules.n} 阶即可获胜`;
     } else {
       overlay.hidden = false;
       action.hidden = false;
@@ -2133,13 +2130,11 @@ async function start() {
         title.textContent = "小红帽开小差中";
         message.textContent = "游戏已暂停";
         action.textContent = "继续游戏";
-        status.textContent = "游戏已暂停";
       } else {
         icon.textContent = "↻";
         title.textContent = "已经装得满满当当";
         message.textContent = `本局 ${game.score} 分，再试一种摆法吧。`;
         action.textContent = "再玩一次";
-        status.textContent = "本局结束";
       }
     }
     document.body.dataset.state = paused ? "paused" : game.state;
@@ -2267,7 +2262,6 @@ function showError(error) {
   action.textContent = "重新加载";
   action.onclick = () => location.reload();
   document.body.dataset.state = "error";
-  element("status").textContent = "资源加载失败";
 }
 
 start().catch(showError);
