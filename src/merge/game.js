@@ -1674,7 +1674,7 @@ const AUDIO = {
     drop: ["./assets/merge/drop-soft.wav"],
   },
   volume: 0.6,
-  dropVolume: 0.5,
+  dropVolume: 1,
   dropLowpassHz: 1600,
   maxVoices: 4,
   unlockGraceSeconds: 0.15,
