@@ -2,7 +2,7 @@
 import { loadSkin } from "./config.js";
 import { loadSprites } from "./assets.js";
 import { MergeWorld } from "./physics.js";
-import { Renderer } from "./renderer.js";
+import { Renderer, fitBoard } from "./renderer.js";
 import { bindInput } from "./input.js";
 import { MergeAudio } from "./audio.js";
 
@@ -39,7 +39,14 @@ async function start() {
   const config = await loadSkin(
     query.get("skin") || "./config/merge/default.json",
   );
-  const sprites = await loadSprites(config);
+  const board = element("board");
+  const fitLoadingBoard = () => fitBoard(board, config.world);
+  const loadingObserver = new ResizeObserver(fitLoadingBoard);
+  if (board.parentElement) loadingObserver.observe(board.parentElement);
+  fitLoadingBoard();
+  const sprites = await loadSprites(config).finally(() =>
+    loadingObserver.disconnect(),
+  );
   dispose();
   sound.stop();
   const lifecycle = new AbortController();
@@ -47,12 +54,7 @@ async function start() {
     document.documentElement.style.setProperty(`--${key}`, value);
   const game = new MergeWorld(config, sprites);
   const canvas = /** @type {HTMLCanvasElement} */ (element("game"));
-  const renderer = new Renderer(
-    canvas,
-    element("board"),
-    game,
-    query.has("debug"),
-  );
+  const renderer = new Renderer(canvas, board, game, query.has("debug"));
   let aim = config.world.width / 2,
     paused = false,
     accumulator = 0,

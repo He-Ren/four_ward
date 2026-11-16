@@ -4,6 +4,21 @@
 const FULL_TURN = Math.PI * 2;
 const GRID_SPACING = 0.5;
 const GRID_RADIUS = 0.012;
+/** Fit loading and playing boards with the same world-to-screen scale.
+ * @param {HTMLElement} board
+ * @param {{width:number,height:number}} world
+ * @returns {number} */
+export function fitBoard(board, world) {
+  const parent = board.parentElement;
+  if (!parent) return 0;
+  const scale = Math.min(
+    parent.clientWidth / world.width,
+    parent.clientHeight / world.height,
+  );
+  board.style.width = `${world.width * scale}px`;
+  board.style.height = `${world.height * scale}px`;
+  return scale;
+}
 export class Renderer {
   /** @param {HTMLCanvasElement} canvas @param {HTMLElement} board @param {MergeWorld} game @param {boolean} debug */
   constructor(canvas, board, game, debug) {
@@ -28,14 +43,9 @@ export class Renderer {
     const parent = this.board.parentElement;
     if (!parent) return;
     const { width, height } = this.game.config.world;
-    this.scale = Math.min(
-      parent.clientWidth / width,
-      parent.clientHeight / height,
-    );
+    this.scale = fitBoard(this.board, this.game.config.world);
     const cssWidth = width * this.scale,
       cssHeight = height * this.scale;
-    this.board.style.width = `${cssWidth}px`;
-    this.board.style.height = `${cssHeight}px`;
     const dpr = Math.min(
       devicePixelRatio || 1,
       this.game.config.rendering.maxDpr,

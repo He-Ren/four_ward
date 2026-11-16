@@ -359,15 +359,9 @@ body[data-state="loading"] .overlay-icon::after {
 .reward-dialog::backdrop {
   background: #253d3766;
 }
-.reward-theme {
-  margin: 0 0 12px;
-  color: var(--accent);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-}
 .reward-image {
-  width: 100px;
-  height: 110px;
+  width: 130px;
+  height: 143px;
   object-fit: contain;
 }
 .reward-dialog h2 {

@@ -108,6 +108,13 @@ try {
         await page.locator("#reward-dialog").evaluate((dialog) => dialog.open),
         true,
       );
+      assert.equal(
+        await page.locator("#reward-dialog .reward-theme").count(),
+        0,
+      );
+      const rewardSize = await page.locator("#reward-image").boundingBox();
+      assert.equal(rewardSize.width, 130);
+      assert.equal(rewardSize.height, 143);
       const beforeContinue = await page.evaluate(() => ({
         score: window.__merge.game.score,
         ids: [...window.__merge.game.pieces.keys()],

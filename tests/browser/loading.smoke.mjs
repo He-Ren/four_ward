@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 const root = new URL("../../", import.meta.url);
+const skin = JSON.parse(
+  await readFile(new URL("config/merge/default.json", root), "utf8"),
+);
 const browser = await chromium.launch(
   process.env.BROWSER_EXECUTABLE
     ? { executablePath: process.env.BROWSER_EXECUTABLE }
@@ -17,11 +20,16 @@ try {
   const requests = new Map(),
     errors = [];
   let audioUnavailable = true;
+  let releaseImage;
+  const imageGate = new Promise((resolve) => {
+    releaseImage = resolve;
+  });
   await context.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (url.hostname !== "merge.test") return route.abort();
     const path = decodeURIComponent(url.pathname).replace(/^\/four_ward\//, "");
     requests.set(path, (requests.get(path) || 0) + 1);
+    if (path === "assets/stickers/sticker1_remove_edge.png") await imageGate;
     if (
       (path.endsWith("form2.png") && requests.get(path) === 1) ||
       (path.endsWith("pop.mp3") && audioUnavailable)
@@ -48,10 +56,44 @@ try {
   });
   const page = await context.newPage();
   page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto("https://merge.test/four_ward/merge.html?debug=1");
+  await page.goto("https://merge.test/four_ward/merge.html?debug=1", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.waitForFunction(
+    () => document.getElementById("board").style.width !== "",
+  );
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+    { width: 1280, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.waitForFunction(({ width, height }) => {
+      const board = document.getElementById("board");
+      const parent = board.parentElement;
+      const scale = Math.min(
+        parent.clientWidth / width,
+        parent.clientHeight / height,
+      );
+      return (
+        Math.abs(board.getBoundingClientRect().width - width * scale) < 1 &&
+        Math.abs(board.getBoundingClientRect().height - height * scale) < 1
+      );
+    }, skin.world);
+    assert.equal(
+      await page.locator("body").getAttribute("data-state"),
+      "loading",
+    );
+  }
+  const loadingBoard = await page.locator("#board").boundingBox();
+  releaseImage();
   await page.waitForFunction(
     () => window.__merge && document.body.dataset.state === "playing",
   );
+  const playingBoard = await page.locator("#board").boundingBox();
+  assert.ok(Math.abs(loadingBoard.width - playingBoard.width) < 1);
+  assert.ok(Math.abs(loadingBoard.height - playingBoard.height) < 1);
   await page.evaluate(() => window.__merge.sound.ready);
   assert.equal(
     requests.has("src/merge/offline-data.js"),

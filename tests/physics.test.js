@@ -5,9 +5,12 @@ import { fixture, advance } from "./helpers/merge.js";
 
 test("one body cannot be merged twice in a simultaneous three-way contact", () => {
   const game = fixture();
-  game.addPiece(0, 4.1, 12);
-  game.addPiece(0, 5, 12);
-  game.addPiece(0, 5.9, 12);
+  const x = game.config.world.width / 2;
+  const spacing = game.config.items[0].size * 0.85;
+  for (const offset of [-spacing, 0, spacing]) {
+    const piece = game.addPiece(0, x + offset, game.config.world.height - 3);
+    piece.born = -game.config.rules.mergeCooldown;
+  }
   advance(game, 0.5);
   assert.equal(game.pieces.size, 2);
   assert.deepEqual(
@@ -103,8 +106,8 @@ test("grounded stack deforms, settles to sleep and stops drifting", () => {
 });
 test("persistent supported piece above line loses only after grace period", () => {
   const game = fixture();
-  game.config.world.dangerY = 14.9;
-  game.addPiece(0, 5, 14);
+  game.config.world.dangerY = game.config.world.height - 0.1;
+  game.addPiece(0, 5, game.config.world.height - 1);
   advance(game, 1);
   assert.equal(game.state, "playing");
   advance(game, 4);
@@ -315,7 +318,7 @@ test("victory continues with score and pieces intact; largest pieces never merge
 
 test("slow wall-brushing fall cannot lose before landing", () => {
   const game = fixture();
-  game.config.world.dangerY = 14.9;
+  game.config.world.dangerY = game.config.world.height - 0.1;
   game.engine.gravity.scale *= 0.001;
   const piece = game.addPiece(0, 0.4, 2);
   advance(game, 5);
@@ -327,7 +330,7 @@ test("slow wall-brushing fall cannot lose before landing", () => {
 
 test("airborne contacts and airborne merges do not count as landing", () => {
   const game = fixture();
-  game.config.world.dangerY = 14.9;
+  game.config.world.dangerY = game.config.world.height - 0.1;
   game.engine.gravity.scale = 0;
   game.config.mergeBurst.enabled = false;
   game.addPiece(0, 4.5, 2);
@@ -341,8 +344,8 @@ test("airborne contacts and airborne merges do not count as landing", () => {
 
 test("launching a grounded piece resets overflow until it lands again", () => {
   const game = fixture();
-  game.config.world.dangerY = 14.9;
-  const piece = game.addPiece(0, 5, 14);
+  game.config.world.dangerY = game.config.world.height - 0.1;
+  const piece = game.addPiece(0, 5, game.config.world.height - 1);
   advance(game, 2);
   assert.ok(piece.overflow > 0);
   Matter.Sleeping.set(piece.body, false);
@@ -357,9 +360,27 @@ test("launching a grounded piece resets overflow until it lands again", () => {
 
 test("sleeping piles transmit floor support and still lose when settled above line", () => {
   const game = fixture();
-  game.config.world.dangerY = 13.5;
-  game.addPiece(2, 5, 14);
-  game.addPiece(0, 5, 12);
+  const floorY = game.config.world.height;
+  const overlap = game.config.physics.slop * 2;
+  game.config.world.dangerY = floorY - game.config.items[2].size;
+  const lower = game.addPiece(
+    2,
+    5,
+    floorY - game.config.items[2].size / 2 + overlap,
+  );
+  const upper = game.addPiece(
+    0,
+    5,
+    floorY -
+      game.config.items[2].size -
+      game.config.items[0].size / 2 +
+      overlap * 2,
+  );
+  game.step();
+  assert.ok(game.supportedBodies().has(upper.body.id));
+  // Freeze an actual contact chain to exercise Matter's dormant pairs.
+  Matter.Sleeping.set(lower.body, true);
+  Matter.Sleeping.set(upper.body, true);
   advance(game, 8);
   assert.equal(game.state, "lost");
   game.destroy();

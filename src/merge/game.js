@@ -1384,6 +1384,21 @@ modules["renderer"] = (() => {
 const FULL_TURN = Math.PI * 2;
 const GRID_SPACING = 0.5;
 const GRID_RADIUS = 0.012;
+/** Fit loading and playing boards with the same world-to-screen scale.
+ * @param {HTMLElement} board
+ * @param {{width:number,height:number}} world
+ * @returns {number} */
+function fitBoard(board, world) {
+  const parent = board.parentElement;
+  if (!parent) return 0;
+  const scale = Math.min(
+    parent.clientWidth / world.width,
+    parent.clientHeight / world.height,
+  );
+  board.style.width = `${world.width * scale}px`;
+  board.style.height = `${world.height * scale}px`;
+  return scale;
+}
 class Renderer {
   /** @param {HTMLCanvasElement} canvas @param {HTMLElement} board @param {MergeWorld} game @param {boolean} debug */
   constructor(canvas, board, game, debug) {
@@ -1408,14 +1423,9 @@ class Renderer {
     const parent = this.board.parentElement;
     if (!parent) return;
     const { width, height } = this.game.config.world;
-    this.scale = Math.min(
-      parent.clientWidth / width,
-      parent.clientHeight / height,
-    );
+    this.scale = fitBoard(this.board, this.game.config.world);
     const cssWidth = width * this.scale,
       cssHeight = height * this.scale;
-    this.board.style.width = `${cssWidth}px`;
-    this.board.style.height = `${cssHeight}px`;
     const dpr = Math.min(
       devicePixelRatio || 1,
       this.game.config.rendering.maxDpr,
@@ -1616,7 +1626,7 @@ class Renderer {
   }
 }
 
-return {Renderer};
+return {fitBoard, Renderer};
 })();
 
 // ---- input.js ----
@@ -2083,7 +2093,7 @@ modules["main"] = (() => {
 const { loadSkin } = modules["config"];
 const { loadSprites } = modules["assets"];
 const { MergeWorld } = modules["physics"];
-const { Renderer } = modules["renderer"];
+const { Renderer, fitBoard } = modules["renderer"];
 const { bindInput } = modules["input"];
 const { MergeAudio } = modules["audio"];
 
@@ -2120,7 +2130,14 @@ async function start() {
   const config = await loadSkin(
     query.get("skin") || "./config/merge/default.json",
   );
-  const sprites = await loadSprites(config);
+  const board = element("board");
+  const fitLoadingBoard = () => fitBoard(board, config.world);
+  const loadingObserver = new ResizeObserver(fitLoadingBoard);
+  if (board.parentElement) loadingObserver.observe(board.parentElement);
+  fitLoadingBoard();
+  const sprites = await loadSprites(config).finally(() =>
+    loadingObserver.disconnect(),
+  );
   dispose();
   sound.stop();
   const lifecycle = new AbortController();
@@ -2128,12 +2145,7 @@ async function start() {
     document.documentElement.style.setProperty(`--${key}`, value);
   const game = new MergeWorld(config, sprites);
   const canvas = /** @type {HTMLCanvasElement} */ (element("game"));
-  const renderer = new Renderer(
-    canvas,
-    element("board"),
-    game,
-    query.has("debug"),
-  );
+  const renderer = new Renderer(canvas, board, game, query.has("debug"));
   let aim = config.world.width / 2,
     paused = false,
     accumulator = 0,
