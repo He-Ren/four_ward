@@ -95,9 +95,11 @@ button[hidden],
   gap: 8px;
   line-height: 1;
 }
-.actions span {
-  font-size: 17px;
-  line-height: 1;
+.restart-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 .brand h1 {
   font-size: 22px;
