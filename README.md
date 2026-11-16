@@ -85,7 +85,7 @@
 | 参数 | 默认值 | 单位 / 校验范围 | 运作方式与调节影响 |
 | --- | --- | --- | --- |
 | `world.width` | 10 | U；2–100 | 容器内部宽度；与 height 一起决定固定比例。增加后，物品 size 不变时相对显得更小，可横向容纳更多物品 |
-| `world.height` | 15 | U；width–200 | 内部高度；增加后有更多堆放空间，也会改变可用下落距离 |
+| `world.height` | 18 | U；width–200 | 内部高度；增加后有更多堆放空间，也会改变可用下落距离 |
 | `world.dangerY` | 2.6 | U；0.1–height | 警戒线距顶部的位置；值越小线越高，允许堆得更高；值越大通常更容易越线 |
 | `world.spawnY` | 1.7 | U；0–dangerY | 预览和投放物体的质心 y 坐标。越小出生越高。还必须满足前 m 阶中最大 size / 2 ≤ spawnY 的校验 |
 | `world.wallThickness` | 0.6 | U；0.1–width | 左、右、底部静态墙体向容器外延伸的厚度；内侧边界仍是 x=0、x=width、y=height。不是可见边框宽度，也不缩小内部空间；不要过薄 |
@@ -124,14 +124,14 @@
 
 | 阶数 | name | 图片文件 | size（U） | weight | score |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 绿色圆形 | sticker1_remove_edge.png | 1.05 | 28 | 0 |
-| 2 | 粉色五边形 | sticker2_remove_edge.png | 1.4 | 24 | 10 |
-| 3 | 蓝色六边形 | sticker3_remove_edge.png | 1.8 | 20 | 30 |
-| 4 | 狐狸头像 | sticker5_remove_edge.png | 2.2 | 16 | 60 |
-| 5 | 人物头像 | sticker4_remove_edge.png | 2.6 | 12 | 100 |
-| 6 | 小形态 | form1.png | 3.1 | 0 | 160 |
-| 7 | 骑士形态 | form2.png | 3.65 | 0 | 250 |
-| 8 | 第三形态 | form3.png | 4.3 | 0 | 400 |
+| 1 | 绿色圆形 | sticker1_remove_edge.png | 1.2 | 28 | 0 |
+| 2 | 粉色五边形 | sticker2_remove_edge.png | 1.6 | 24 | 10 |
+| 3 | 蓝色六边形 | sticker3_remove_edge.png | 2 | 20 | 30 |
+| 4 | 狐狸头像 | sticker5_remove_edge.png | 2.3 | 16 | 60 |
+| 5 | 人物头像 | sticker4_remove_edge.png | 2.8 | 12 | 100 |
+| 6 | 小形态 | form1.png | 3.8 | 0 | 160 |
+| 7 | 骑士形态 | form2.png | 4.2 | 0 | 250 |
+| 8 | 第三形态 | form3.png | 4.5 | 0 | 400 |
 | 9 | 小红帽 | grown1.png | 5.1 | 0 | 650 |
 
 默认前五阶的**基础**概率为 28%、24%、20%、16%、12%。avoidRepeat 开启时会拒绝部分重复抽取，因此实际长期占比不等于这组比例。关闭后恢复独立加权随机。重开时的“当前”和“下一个”先各自独立抽取，之后的 next 才使用防重复流程。
