@@ -88,9 +88,16 @@ button[hidden],
   gap: 8px;
   font-size: 12px;
 }
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
 .actions span {
-  margin-left: 8px;
   font-size: 17px;
+  line-height: 1;
 }
 .brand h1 {
   font-size: 22px;
@@ -448,8 +455,8 @@ body[data-state="loading"] .overlay-icon::after {
   .actions button {
     padding: 6px 8px;
   }
-  .actions span {
-    margin-left: 2px;
+  .actions button {
+    gap: 2px;
   }
 }
 @media (max-height: 520px) {
