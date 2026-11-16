@@ -401,8 +401,10 @@ body[data-state="loading"] .overlay-icon::after {
   }
   .next-card {
     padding: 5px 12px;
+    width: fit-content;
+    margin-left: auto;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: center;
     gap: 10px;
     height: 52px;
     border-radius: 12px;
