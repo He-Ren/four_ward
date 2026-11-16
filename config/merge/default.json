@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "name": "合成五哥",
+  "name": "合成小红帽",
   "world": {
     "width": 10,
     "height": 15,
@@ -43,15 +43,15 @@
       "score": 30
     },
     {
-      "name": "人物头像",
-      "image": "../../assets/stickers/sticker4_remove_edge.png",
+      "name": "狐狸头像",
+      "image": "../../assets/stickers/sticker5_remove_edge.png",
       "size": 2.2,
       "weight": 16,
       "score": 60
     },
     {
-      "name": "狐狸头像",
-      "image": "../../assets/stickers/sticker5_remove_edge.png",
+      "name": "人物头像",
+      "image": "../../assets/stickers/sticker4_remove_edge.png",
       "size": 2.6,
       "weight": 12,
       "score": 100
@@ -71,15 +71,15 @@
       "score": 250
     },
     {
-      "name": "Logo",
-      "image": "../../assets/stickers/sticker_logo.png",
+      "name": "第三形态",
+      "image": "../../assets/stickers/form3.png",
       "size": 4.3,
       "weight": 0,
       "score": 400
     },
     {
-      "name": "五哥",
-      "image": "../../assets/stickers/wu_ge.png",
+      "name": "小红帽",
+      "image": "../../assets/stickers/grown1.png",
       "size": 5.1,
       "weight": 0,
       "score": 650

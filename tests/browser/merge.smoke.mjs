@@ -39,7 +39,7 @@ try {
       await page.waitForFunction(
         () => window.__merge && document.body.dataset.state === "playing",
       );
-      assert.equal(await page.title(), "合成五哥");
+      assert.equal(await page.title(), "合成小红帽");
       assert.equal(await page.locator("#progression li").count(), 9);
       await page.evaluate(() => window.__merge.sound.ready);
       assert.equal(
@@ -91,7 +91,7 @@ try {
       );
       assert.equal(
         await page.locator("#reward-title").textContent(),
-        "你合成了五哥！",
+        "你合成了小红帽！",
       );
       await page.keyboard.press("Escape");
       await page.keyboard.press("Space");

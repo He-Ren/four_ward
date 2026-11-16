@@ -103,7 +103,7 @@ async function start() {
       }
     } else if (game.state === "playing" && !paused) {
       overlay.hidden = true;
-      status.textContent = `合成五哥 · 合成第 ${config.rules.n} 阶即可获胜`;
+      status.textContent = `合成小红帽 · 合成第 ${config.rules.n} 阶即可获胜`;
     } else {
       overlay.hidden = false;
       action.hidden = false;
