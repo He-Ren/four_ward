@@ -57,11 +57,12 @@ button[hidden],
   margin: auto;
   padding: 24px 42px 16px;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 20px;
 }
 .topbar {
   display: flex;
+  gap: 16px;
   align-items: center;
   justify-content: space-between;
 }
@@ -75,26 +76,14 @@ button[hidden],
   font-size: 15px;
   letter-spacing: 0.02em;
 }
-.brand small {
-  display: block;
-  font-size: 8px;
-  letter-spacing: 0.2em;
-  margin-top: 4px;
-  color: var(--muted);
-}
-.brand-mark {
-  background: var(--ink);
-  color: var(--background);
-  width: 39px;
-  height: 39px;
-  border-radius: 12px;
-  font:
-    bold 22px "Microsoft YaHei",
-    sans-serif;
-  text-align: center;
-  line-height: 34px;
+.brand-image {
+  width: 44px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 .actions {
+  flex-shrink: 0;
   display: flex;
   gap: 8px;
   font-size: 12px;
@@ -103,27 +92,12 @@ button[hidden],
   margin-left: 8px;
   font-size: 17px;
 }
-.heading {
-  text-align: center;
-}
-.eyebrow {
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  color: var(--accent);
-  margin: 0 0 9px;
-}
-h1 {
-  font-size: 30px;
-  letter-spacing: 0.1em;
+.brand h1 {
+  font-size: 22px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
   font-weight: 550;
   margin: 0;
-}
-h1 span {
-  font:
-    italic 34px Georgia,
-    serif;
-  letter-spacing: -0.05em;
-  margin-left: 15px;
 }
 
 .game-layout {
@@ -195,21 +169,11 @@ canvas {
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
-.section-number {
-  font-size: 8px;
-  letter-spacing: 0.12em;
-  color: var(--accent);
-}
 h2 {
   font-size: 19px;
   line-height: 1.6;
   font-weight: 500;
   margin: 12px 0;
-}
-.evolution p {
-  font-size: 11px;
-  line-height: 1.9;
-  color: var(--muted);
 }
 
 .next-card {
@@ -225,38 +189,6 @@ h2 {
   width: 58px;
   height: 58px;
   object-fit: contain;
-}
-.next-card > span:last-child {
-  font-size: 11px;
-  color: var(--accent);
-}
-.evolution ol {
-  list-style: none;
-  padding: 0;
-  margin: 15px 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-.evolution li {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.evolution li + li:before {
-  content: "›";
-  color: #b3bdad;
-}
-.evolution img {
-  width: 35px;
-  height: 35px;
-  object-fit: contain;
-}
-.evolution li:last-child img {
-  outline: 1px dashed #b7c5ad;
-  outline-offset: 4px;
-  border-radius: 50%;
 }
 
 .credits {
@@ -384,10 +316,6 @@ body[data-state="loading"] .overlay-icon::after {
     padding-top: 15px;
   }
 
-  .heading h1 {
-    font-size: 25px;
-  }
-
   .left-panel,
   .right-panel {
     gap: 16px;
@@ -400,9 +328,6 @@ body[data-state="loading"] .overlay-icon::after {
   .next-card {
     padding: 12px;
   }
-  .evolution h2 {
-    margin: 7px 0;
-  }
 }
 @media (max-width: 759px) {
   .app {
@@ -414,14 +339,14 @@ body[data-state="loading"] .overlay-icon::after {
     gap: 12px;
   }
   .brand {
-    font-size: 12px;
+    gap: 6px;
   }
-  .brand-mark {
-    width: 31px;
-    height: 31px;
-    font-size: 25px;
-    line-height: 28px;
-    border-radius: 10px;
+  .brand h1 {
+    font-size: 18px;
+  }
+  .brand-image {
+    width: 32px;
+    height: 36px;
   }
   .actions {
     gap: 5px;
@@ -429,16 +354,6 @@ body[data-state="loading"] .overlay-icon::after {
   .actions button {
     padding: 7px 10px;
     font-size: 11px;
-  }
-  .heading h1 {
-    font-size: 22px;
-  }
-  .heading h1 span {
-    font-size: 27px;
-  }
-  .eyebrow {
-    font-size: 7px;
-    margin-bottom: 6px;
   }
 
   .game-layout {
@@ -457,9 +372,6 @@ body[data-state="loading"] .overlay-icon::after {
     grid-row: 1;
     padding: 0;
     display: block;
-  }
-  .evolution {
-    display: none;
   }
   .score-card {
     border: 0;
@@ -490,7 +402,7 @@ body[data-state="loading"] .overlay-icon::after {
   .next-card {
     padding: 5px 12px;
     flex-direction: row;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 10px;
     height: 52px;
     border-radius: 12px;
@@ -501,9 +413,6 @@ body[data-state="loading"] .overlay-icon::after {
   .next-card img {
     width: 39px;
     height: 39px;
-  }
-  .next-card > span:last-child {
-    display: none;
   }
   .arena-slot {
     grid-row: 2;
@@ -531,8 +440,8 @@ body[data-state="loading"] .overlay-icon::after {
   .app {
     padding-inline: 12px;
   }
-  .brand {
-    font-size: 10px;
+  .brand h1 {
+    font-size: 16px;
   }
   .actions button {
     padding: 6px 8px;
@@ -546,12 +455,6 @@ body[data-state="loading"] .overlay-icon::after {
     min-height: 0;
     padding: 10px 16px;
     gap: 8px;
-  }
-  .heading {
-    display: none;
-  }
-  .evolution {
-    display: none;
   }
   .left-panel,
   .right-panel {

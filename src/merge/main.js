@@ -69,18 +69,7 @@ async function start() {
   const score = element("score"),
     bestLabel = element("best");
   const nextImage = /** @type {HTMLImageElement} */ (element("next-image"));
-  const progression = element("progression");
-  progression.replaceChildren();
   const thumbnails = sprites.map((sprite) => sprite.image.toDataURL());
-  sprites.forEach((sprite, index) => {
-    const li = document.createElement("li"),
-      img = document.createElement("img");
-    img.src = thumbnails[index];
-    img.alt = `第 ${index + 1} 阶`;
-    img.title = img.alt;
-    li.append(img);
-    progression.append(li);
-  });
   rewardImage.src = thumbnails.at(-1) || "";
   rewardDialog.addEventListener("cancel", (event) => event.preventDefault(), {
     signal: lifecycle.signal,

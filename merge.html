@@ -9,9 +9,20 @@
     <meta name="theme-color" content="#f7f5ee" />
     <meta name="description" content="一个会弹一弹的合成小游戏。" />
     <title>合成小红帽</title>
-    <link rel="icon" href="assets/stickers/sticker_logo.png" type="image/png" />
-    <link rel="stylesheet" href="src/merge/styles.css?v=loading-size-1" />
-    <script defer src="src/merge/boot.js?v=loading-size-1"></script>
+    <link
+      rel="icon"
+      href="assets/ui/favicon.png"
+      type="image/png"
+      sizes="64x64"
+    />
+    <link
+      rel="preload"
+      href="assets/ui/brand.webp"
+      as="image"
+      fetchpriority="high"
+    />
+    <link rel="stylesheet" href="src/merge/styles.css?v=header-1" />
+    <script defer src="src/merge/boot.js?v=header-1"></script>
   </head>
   <body data-state="loading">
     <div class="app">
@@ -20,9 +31,18 @@
           class="brand"
           href="index.html"
           aria-label="返回 4Ward 学生节小游戏主页"
-          ><span class="brand-mark" aria-hidden="true">伍</span
-          ><span>4Ward <small>学生节</small></span></a
         >
+          <img
+            class="brand-image"
+            src="assets/ui/brand.webp"
+            width="44"
+            height="48"
+            alt=""
+            loading="eager"
+            fetchpriority="high"
+          />
+          <h1>合成小红帽</h1>
+        </a>
         <div class="actions">
           <button id="pause" type="button" disabled>暂停</button
           ><button id="restart" type="button" disabled>
@@ -30,9 +50,6 @@
           </button>
         </div>
       </header>
-      <div class="heading">
-        <h1>合成小红帽</h1>
-      </div>
       <main class="game-layout">
         <aside class="left-panel">
           <div class="score-card">
@@ -75,12 +92,6 @@
           <div class="next-card">
             <span class="label">下一个</span
             ><img id="next-image" alt="下一个物品" hidden />
-          </div>
-          <div class="evolution">
-            <span class="section-number">02 / 成长路线</span>
-            <h2>成长路线</h2>
-            <ol id="progression"></ol>
-            <p>合成第九阶，向工作人员展示领奖。</p>
           </div>
         </aside>
       </main>

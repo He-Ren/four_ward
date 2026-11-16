@@ -41,6 +41,7 @@ try {
       css: "text/css",
       json: "application/json",
       png: "image/png",
+      webp: "image/webp",
       mp3: "audio/mpeg",
       wav: "audio/wav",
     };
@@ -86,6 +87,19 @@ try {
       "loading",
     );
   }
+  await page.waitForFunction(() => {
+    const logo = document.querySelector(".brand-image");
+    return logo.complete && logo.naturalWidth > 0;
+  });
+  assert.equal(
+    await page.locator("body").getAttribute("data-state"),
+    "loading",
+  );
+  assert.equal(
+    requests.get("assets/ui/brand.webp"),
+    1,
+    "preload reuses one independent header image request",
+  );
   const loadingBoard = await page.locator("#board").boundingBox();
   releaseImage();
   await page.waitForFunction(

@@ -40,7 +40,34 @@ try {
         () => window.__merge && document.body.dataset.state === "playing",
       );
       assert.equal(await page.title(), "合成小红帽");
-      assert.equal(await page.locator("#progression li").count(), 9);
+      assert.equal(
+        await page.locator("#progression, .evolution, .heading").count(),
+        0,
+      );
+      assert.equal(
+        await page.locator(".topbar h1").textContent(),
+        "合成小红帽",
+      );
+      assert.equal(await page.locator("h1").count(), 1);
+      await page.waitForFunction(
+        () => document.querySelector(".brand-image").naturalWidth > 0,
+      );
+      assert.equal(
+        await page.locator('link[rel="icon"]').getAttribute("href"),
+        "assets/ui/favicon.png",
+      );
+      if (mobile) {
+        const leftGap = await page.locator(".next-card").evaluate((card) => {
+          return (
+            card.querySelector(".label").getBoundingClientRect().left -
+            card.getBoundingClientRect().left
+          );
+        });
+        assert.ok(
+          leftGap <= 13,
+          "next label aligns with the card's left padding",
+        );
+      }
       await page.evaluate(() => window.__merge.sound.ready);
       assert.equal(
         await page.evaluate(
