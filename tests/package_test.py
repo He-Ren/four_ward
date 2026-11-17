@@ -39,6 +39,7 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(embedded["skin"], json.loads(skin_path.read_text(encoding="utf-8")))
         self.assertEqual(set(embedded["images"]), {item["image"] for item in embedded["skin"]["items"]})
         for name, uri in embedded["images"].items():
+            self.assertTrue(uri.startswith(f"data:image/{Path(name).suffix[1:]};base64,"))
             self.assertEqual(base64.b64decode(uri.split(",", 1)[1]), (skin_path.parent / name).read_bytes())
         audio_source = (ROOT / "src/merge/audio.js").read_text(encoding="utf-8")
         self.assertEqual(len(embedded["audio"]), 3)

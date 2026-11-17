@@ -23,7 +23,7 @@ test("one body cannot be merged twice in a simultaneous three-way contact", () =
 test("the default ninth tier is the goal, while the eighth tier can keep merging", () => {
   const game = fixture();
   assert.equal(game.config.rules.n, 9);
-  assert.ok(game.config.items[8].image.endsWith("/grown1.png"));
+  assert.ok(game.config.items[8].image.endsWith("/grown1.webp"));
   game.addPiece(6, 4.4, 12);
   game.addPiece(6, 5.6, 12);
   advance(game, 1);

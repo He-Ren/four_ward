@@ -29,9 +29,9 @@ try {
     if (url.hostname !== "merge.test") return route.abort();
     const path = decodeURIComponent(url.pathname).replace(/^\/four_ward\//, "");
     requests.set(path, (requests.get(path) || 0) + 1);
-    if (path === "assets/stickers/sticker1_remove_edge.png") await imageGate;
+    if (path === "assets/game/sticker1_remove_edge.webp") await imageGate;
     if (
-      (path.endsWith("form2.png") && requests.get(path) === 1) ||
+      (path.endsWith("form2.webp") && requests.get(path) === 1) ||
       (path.endsWith("pop.mp3") && audioUnavailable)
     )
       return route.fulfill({ status: 503, body: "temporary network failure" });
@@ -110,13 +110,25 @@ try {
   assert.ok(Math.abs(loadingBoard.width - playingBoard.width) < 1);
   assert.ok(Math.abs(loadingBoard.height - playingBoard.height) < 1);
   await page.evaluate(() => window.__merge.sound.ready);
+  for (const item of skin.items) {
+    const path = new URL(
+      item.image,
+      new URL("config/merge/default.json", root),
+    ).pathname.split("/assets/")[1];
+    assert.equal(
+      requests.get("assets/" + path),
+      path.endsWith("form2.webp") ? 2 : 1,
+      "game and help share one successful image download",
+    );
+  }
+
   assert.equal(
     requests.has("src/merge/offline-data.js"),
     false,
     "online startup must not download offline data",
   );
   assert.equal(
-    requests.get("assets/stickers/form2.png"),
+    requests.get("assets/game/form2.webp"),
     2,
     "PNG recovers on retry",
   );

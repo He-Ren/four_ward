@@ -61,15 +61,15 @@ def outputs():
     images = {}
     for item in skin["items"]:
         image_path = (skin_path.parent / item["image"]).resolve()
-        if not image_path.is_relative_to(ROOT) or image_path.suffix.lower() != ".png":
-            raise ValueError("Offline defaults must use PNG files inside this repository")
-        images[item["image"]] = "data:image/png;base64," + base64.b64encode(image_path.read_bytes()).decode("ascii")
+        if not image_path.is_relative_to(ROOT) or image_path.suffix.lower() not in (".png", ".webp"):
+            raise ValueError("Offline defaults must use PNG or WebP files inside this repository")
+        images[item["image"]] = f"data:image/{image_path.suffix[1:].lower()};base64," + base64.b64encode(image_path.read_bytes()).decode("ascii")
     audio = {}
     for filename in AUDIO_FILES:
         audio_path = ROOT / "assets" / "merge" / filename
         mime = AUDIO_MIME_TYPES[audio_path.suffix]
         audio[f"./assets/merge/{filename}"] = f"data:{mime};base64," + base64.b64encode(audio_path.read_bytes()).decode("ascii")
-    data = '// Generated from config/merge/default.json, its PNG files and merge audio clips.\nwindow.MergeOffline = '
+    data = '// Generated from config/merge/default.json, its image files and merge audio clips.\nwindow.MergeOffline = '
     data += json.dumps({"skin": skin, "images": images, "audio": audio}, ensure_ascii=False, separators=(",", ":")) + ";\n"
     return {SOURCE / "game.js": code, SOURCE / "offline-data.js": data}
 

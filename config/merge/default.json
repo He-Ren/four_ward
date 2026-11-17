@@ -24,63 +24,63 @@
   "items": [
     {
       "name": "绿色圆形",
-      "image": "../../assets/stickers/sticker1_remove_edge.png",
+      "image": "../../assets/game/sticker1_remove_edge.webp",
       "size": 1.2,
       "weight": 28,
       "score": 0
     },
     {
       "name": "粉色五边形",
-      "image": "../../assets/stickers/sticker2_remove_edge.png",
+      "image": "../../assets/game/sticker2_remove_edge.webp",
       "size": 1.6,
       "weight": 24,
       "score": 10
     },
     {
       "name": "蓝色六边形",
-      "image": "../../assets/stickers/sticker3_remove_edge.png",
+      "image": "../../assets/game/sticker3_remove_edge.webp",
       "size": 2,
       "weight": 20,
       "score": 30
     },
     {
       "name": "狐狸头像",
-      "image": "../../assets/stickers/sticker5_remove_edge.png",
+      "image": "../../assets/game/sticker5_remove_edge.webp",
       "size": 2.3,
       "weight": 16,
       "score": 60
     },
     {
       "name": "人物头像",
-      "image": "../../assets/stickers/sticker4_remove_edge.png",
+      "image": "../../assets/game/sticker4_remove_edge.webp",
       "size": 2.8,
       "weight": 12,
       "score": 100
     },
     {
       "name": "小形态",
-      "image": "../../assets/stickers/form1.png",
+      "image": "../../assets/game/form1.webp",
       "size": 3.8,
       "weight": 0,
       "score": 160
     },
     {
       "name": "骑士形态",
-      "image": "../../assets/stickers/form2.png",
+      "image": "../../assets/game/form2.webp",
       "size": 4.2,
       "weight": 0,
       "score": 250
     },
     {
       "name": "第三形态",
-      "image": "../../assets/stickers/form3.png",
+      "image": "../../assets/game/form3.webp",
       "size": 4.5,
       "weight": 0,
       "score": 400
     },
     {
       "name": "小红帽",
-      "image": "../../assets/stickers/grown1.png",
+      "image": "../../assets/game/grown1.webp",
       "size": 5.1,
       "weight": 0,
       "score": 650

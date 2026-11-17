@@ -1,6 +1,6 @@
 // @ts-check
 import { loadSkin } from "./config.js";
-import { loadSprites } from "./assets.js";
+import { loadSprites, releaseSprites } from "./assets.js";
 import { MergeWorld } from "./physics.js";
 import { Renderer, fitBoard } from "./renderer.js";
 import { bindInput } from "./input.js";
@@ -70,7 +70,7 @@ async function start() {
   const score = element("score"),
     bestLabel = element("best");
   const nextImage = /** @type {HTMLImageElement} */ (element("next-image"));
-  const thumbnails = sprites.map((sprite) => sprite.image.toDataURL());
+  const thumbnails = sprites.map((sprite) => sprite.source);
   rewardImage.src = thumbnails.at(-1) || "";
   rewardDialog.addEventListener("cancel", (event) => event.preventDefault(), {
     signal: lifecycle.signal,
@@ -219,6 +219,7 @@ async function start() {
     cancelAnimationFrame(frameId);
     unbind();
     renderer.destroy();
+    releaseSprites(sprites);
     game.destroy();
   };
   window.addEventListener(
