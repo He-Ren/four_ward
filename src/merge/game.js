@@ -2121,7 +2121,7 @@ function bindHelp(images, pause) {
     const row = document.createElement("li");
     const label = `${numbers[index] || index + 1}阶`;
     const text = document.createElement("span");
-    text.textContent = `${label}：`;
+    text.textContent = label;
     const preview = document.createElement("button");
     preview.type = "button";
     preview.setAttribute("aria-label", `查看${label}大图`);
