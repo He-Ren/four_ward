@@ -5,6 +5,7 @@ import { MergeWorld } from "./physics.js";
 import { Renderer, fitBoard } from "./renderer.js";
 import { bindInput } from "./input.js";
 import { MergeAudio } from "./audio.js";
+import { bindHelp } from "./help.js";
 
 /** @template {HTMLElement} T @param {string} id @returns {T} */
 function element(id) {
@@ -113,6 +114,7 @@ async function start() {
     document.body.dataset.state = paused ? "paused" : game.state;
   }
   function pause() {
+    if (document.querySelector("#help-dialog[open]")) return;
     if (game.state !== "playing") return;
     paused = !paused;
     accumulator = 0;
@@ -156,6 +158,9 @@ async function start() {
     sync();
   });
   pauseButton.onclick = pause;
+  const unbindHelp = bindHelp(thumbnails, () => {
+    if (game.state === "playing" && !paused) pause();
+  });
   restartButton.onclick = restart;
   rewardContinue.onclick = () => {
     if (!game.continueAfterWin()) return;
@@ -208,6 +213,7 @@ async function start() {
   if (query.has("debug"))
     Reflect.set(window, "__merge", { game, renderer, config, sprites, sound });
   dispose = () => {
+    unbindHelp();
     rewardDialog.close();
     lifecycle.abort();
     cancelAnimationFrame(frameId);

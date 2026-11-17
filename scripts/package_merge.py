@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "src" / "merge"
 MODULES = (
     "vendor", "resources", "config", "geometry", "assets", "physics",
-    "renderer", "input", "audio", "main",
+    "renderer", "input", "audio", "help", "main",
 )
 AUDIO_FILES = ("pop.mp3", "pop2.mp3", "drop-soft.wav")
 AUDIO_MIME_TYPES = {".mp3": "audio/mpeg", ".wav": "audio/wav"}

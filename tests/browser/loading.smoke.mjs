@@ -100,6 +100,7 @@ try {
     1,
     "preload reuses one independent header image request",
   );
+  assert.equal(await page.locator("#help").isVisible(), false);
   const loadingBoard = await page.locator("#board").boundingBox();
   releaseImage();
   await page.waitForFunction(

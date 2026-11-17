@@ -2087,6 +2087,119 @@ class MergeAudio {
 return {trimLeadingSilence, normalizeLoudness, MergeAudio};
 })();
 
+// ---- help.js ----
+modules["help"] = (() => {
+// @ts-check
+/** Bind help only after game images are ready. No new image downloads.
+ * @param {string[]} images
+ * @param {() => void} pause
+ * @returns {() => void} */
+function bindHelp(images, pause) {
+  const button = /** @type {HTMLButtonElement} */ (
+    document.getElementById("help")
+  );
+  const dialog = /** @type {HTMLDialogElement} */ (
+    document.getElementById("help-dialog")
+  );
+  const viewer = /** @type {HTMLDialogElement} */ (
+    document.getElementById("image-dialog")
+  );
+  const large = /** @type {HTMLImageElement} */ (
+    document.getElementById("help-large-image")
+  );
+  const close = /** @type {HTMLButtonElement} */ (
+    document.getElementById("help-close")
+  );
+  const list = /** @type {HTMLOListElement} */ (
+    document.getElementById("help-progression")
+  );
+  const controller = new AbortController();
+  const options = { signal: controller.signal };
+  const numbers = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
+  list.replaceChildren();
+  images.forEach((src, index) => {
+    const row = document.createElement("li");
+    const label = `${numbers[index] || index + 1}阶`;
+    const text = document.createElement("span");
+    text.textContent = `${label}：`;
+    const preview = document.createElement("button");
+    preview.type = "button";
+    preview.setAttribute("aria-label", `查看${label}大图`);
+    const image = document.createElement("img");
+    image.src = src;
+    image.alt = label;
+    preview.append(image);
+    preview.addEventListener(
+      "click",
+      () => {
+        large.src = src;
+        large.alt = label;
+        viewer.showModal();
+        viewer.focus();
+      },
+      options,
+    );
+    row.append(text, preview);
+    list.append(row);
+  });
+  button.addEventListener(
+    "click",
+    () => {
+      pause();
+      dialog.showModal();
+    },
+    options,
+  );
+  close.addEventListener("click", () => dialog.close(), options);
+  /** @param {MouseEvent} event */
+  const outside = (event) => {
+    const box = dialog.getBoundingClientRect();
+    return (
+      event.clientX < box.left ||
+      event.clientX > box.right ||
+      event.clientY < box.top ||
+      event.clientY > box.bottom
+    );
+  };
+  let beganOutside = false;
+  dialog.addEventListener(
+    "pointerdown",
+    (event) => {
+      beganOutside = outside(event);
+    },
+    options,
+  );
+  dialog.addEventListener(
+    "click",
+    (event) => {
+      if (event.target === dialog && beganOutside && outside(event))
+        dialog.close();
+      beganOutside = false;
+    },
+    options,
+  );
+  viewer.addEventListener(
+    "click",
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      viewer.close();
+    },
+    options,
+  );
+  button.hidden = false;
+  return () => {
+    viewer.close();
+    dialog.close();
+    button.hidden = true;
+    controller.abort();
+    list.replaceChildren();
+  };
+}
+
+return {bindHelp};
+})();
+
 // ---- main.js ----
 modules["main"] = (() => {
 // @ts-check
@@ -2096,6 +2209,7 @@ const { MergeWorld } = modules["physics"];
 const { Renderer, fitBoard } = modules["renderer"];
 const { bindInput } = modules["input"];
 const { MergeAudio } = modules["audio"];
+const { bindHelp } = modules["help"];
 
 /** @template {HTMLElement} T @param {string} id @returns {T} */
 function element(id) {
@@ -2204,6 +2318,7 @@ async function start() {
     document.body.dataset.state = paused ? "paused" : game.state;
   }
   function pause() {
+    if (document.querySelector("#help-dialog[open]")) return;
     if (game.state !== "playing") return;
     paused = !paused;
     accumulator = 0;
@@ -2247,6 +2362,9 @@ async function start() {
     sync();
   });
   pauseButton.onclick = pause;
+  const unbindHelp = bindHelp(thumbnails, () => {
+    if (game.state === "playing" && !paused) pause();
+  });
   restartButton.onclick = restart;
   rewardContinue.onclick = () => {
     if (!game.continueAfterWin()) return;
@@ -2299,6 +2417,7 @@ async function start() {
   if (query.has("debug"))
     Reflect.set(window, "__merge", { game, renderer, config, sprites, sound });
   dispose = () => {
+    unbindHelp();
     rewardDialog.close();
     lifecycle.abort();
     cancelAnimationFrame(frameId);

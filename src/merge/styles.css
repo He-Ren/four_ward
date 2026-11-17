@@ -481,3 +481,141 @@ body[data-state="loading"] .overlay-icon::after {
     gap: 14px;
   }
 }
+
+/* Help is a separate modal layer; the image viewer stacks above it. */
+.help-dialog {
+  width: min(32rem, 70vw);
+  height: min(42rem, 70vh);
+  height: min(42rem, 70svh);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  overflow: hidden;
+}
+.help-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.help-dialog::backdrop {
+  background: #0008;
+}
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.help-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+.help-close {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+.help-content {
+  padding: 0 1rem 1rem;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+.help-content h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+.help-content small {
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.help-touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .help-touch {
+    display: block;
+  }
+  .help-mouse {
+    display: none;
+  }
+}
+.help-progression {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.help-progression li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.help-progression button {
+  padding: 0.25rem;
+  border: 0;
+}
+.help-progression img {
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+}
+.image-dialog {
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 1.5rem;
+  border: 0;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  outline: none;
+}
+.image-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.image-dialog::backdrop {
+  background: #0009;
+}
+.image-dialog img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(36rem, 85vw);
+  max-height: min(36rem, 72vh);
+  max-height: min(36rem, 72svh);
+  object-fit: contain;
+}
+.image-dialog p {
+  margin: 0;
+  font-size: 0.75rem;
+}
+@media (max-width: 380px) {
+  .topbar {
+    gap: 6px;
+  }
+}

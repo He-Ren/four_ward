@@ -76,6 +76,73 @@ try {
         3,
       );
 
+      const help = page.locator("#help-dialog");
+      await page.locator("#help").click();
+      assert.equal(
+        await page.locator("body").getAttribute("data-state"),
+        "paused",
+      );
+      assert.equal(
+        await page.locator("#help-progression li").count(),
+        skin.rules.n,
+      );
+      assert.equal(
+        await page.locator(mobile ? ".help-touch" : ".help-mouse").isVisible(),
+        true,
+      );
+      const helpSize = await help.boundingBox();
+      const viewport = page.viewportSize();
+      assert.ok(
+        Math.abs(helpSize.width - Math.min(512, viewport.width * 0.7)) < 1,
+      );
+      assert.ok(
+        Math.abs(helpSize.height - Math.min(672, viewport.height * 0.7)) < 1,
+      );
+      const simulationTime = await page.evaluate(
+        () => window.__merge.game.time,
+      );
+      await page.keyboard.press("p");
+      await page.locator("#help-progression button").last().click();
+      assert.equal(await help.evaluate((node) => node.open), true);
+      assert.equal(
+        await page.locator("#image-dialog").evaluate((node) => node.open),
+        true,
+      );
+      const scroll = await page
+        .locator(".help-content")
+        .evaluate((node) => node.scrollTop);
+      await page.locator("#help-large-image").click();
+      assert.equal(await help.evaluate((node) => node.open), true);
+      assert.equal(
+        await page.locator("#image-dialog").evaluate((node) => node.open),
+        false,
+      );
+      assert.equal(
+        await page.locator(".help-content").evaluate((node) => node.scrollTop),
+        scroll,
+      );
+      await page.locator("#help-progression button").last().click();
+      await page.mouse.click(2, 2);
+      assert.equal(await help.evaluate((node) => node.open), true);
+      await page.locator("#help-close").click();
+      assert.equal(await help.evaluate((node) => node.open), false);
+      assert.equal(
+        await page.locator("body").getAttribute("data-state"),
+        "paused",
+      );
+      await page.locator("#help").click();
+      await page.mouse.click(2, 2);
+      assert.equal(await help.evaluate((node) => node.open), false);
+      assert.equal(
+        await page.locator("body").getAttribute("data-state"),
+        "paused",
+      );
+      assert.equal(
+        await page.evaluate(() => window.__merge.game.time),
+        simulationTime,
+      );
+      await page.locator("#pause").click();
+
       const canvas = page.locator("#game");
       if (mobile) await canvas.tap();
       else {

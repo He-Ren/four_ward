@@ -21,8 +21,8 @@
       as="image"
       fetchpriority="high"
     />
-    <link rel="stylesheet" href="src/merge/styles.css?v=restart-svg-1" />
-    <script defer src="src/merge/boot.js?v=header-1"></script>
+    <link rel="stylesheet" href="src/merge/styles.css?v=help-1" />
+    <script defer src="src/merge/boot.js?v=help-1"></script>
   </head>
   <body data-state="loading">
     <div class="app">
@@ -44,6 +44,7 @@
           <h1>合成小红帽</h1>
         </a>
         <div class="actions">
+          <button id="help" type="button" hidden>玩法</button>
           <button id="pause" type="button" disabled>暂停</button
           ><button id="restart" type="button" disabled>
             重新开始
@@ -131,6 +132,37 @@
       <h2 id="reward-title" tabindex="-1">你合成了小红帽！</h2>
       <p id="reward-message">将此页面展示给工作人员以获取奖励</p>
       <button id="reward-continue" type="button">继续游戏</button>
+    </dialog>
+    <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
+      <header class="help-header">
+        <h2 id="help-title">玩法介绍</h2>
+        <button
+          id="help-close"
+          class="help-close"
+          type="button"
+          aria-label="关闭玩法介绍"
+          autofocus
+        >
+          ×
+        </button>
+      </header>
+      <div class="help-content">
+        <p class="help-touch">按下手指瞄准，抬起放置物品</p>
+        <p class="help-mouse">单击放置物品</p>
+        <p>相同的物品会合成高一阶的物品，合成最高阶的小红帽获胜</p>
+        <h3>成长路线 <small>（点击查看大图）</small></h3>
+        <ol id="help-progression" class="help-progression"></ol>
+      </div>
+    </dialog>
+    <dialog
+      id="image-dialog"
+      class="image-dialog"
+      aria-label="贴纸大图预览"
+      aria-describedby="image-hint"
+      tabindex="-1"
+    >
+      <img id="help-large-image" alt="" />
+      <p id="image-hint">点击任意位置返回</p>
     </dialog>
   </body>
 </html>
