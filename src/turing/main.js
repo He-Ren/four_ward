@@ -74,7 +74,9 @@
         cell.querySelector(".progress-symbol").textContent = result === null ? "?" : result ? "✓" : "×";
         cell.setAttribute("aria-label", `第 ${index + 1} 题，${result === null ? "未回答" : result ? "答对" : "答错"}`);
       });
-      caption.textContent = round ? `答对 ${round.score} / ${QUESTION_COUNT} 题` : `答对 ${config.k} 题即可获胜`;
+      caption.textContent = round
+        ? `还需答对 ${Math.max(0, config.k - round.score)} 题`
+        : `答对 ${config.k} 题胜利`;
       updateMarker();
     }
 
@@ -97,7 +99,7 @@
           <h2 tabindex="-1">你能认出回答背后的 AI 吗？</h2>
           <ol class="rules" aria-label="游戏规则">
             <li><span class="rule-number" aria-hidden="true">01</span><span>给出对话场景，并展示AI的回答。</span></li>
-            <li><span class="rule-number" aria-hidden="true">02</span><span>阅读对话，猜猜写这个回答的是哪家AI</span></li>
+            <li><span class="rule-number" aria-hidden="true">02</span><span>阅读对话，猜猜写这个回答的是哪家AI。</span></li>
             <li><span class="rule-number" aria-hidden="true">03</span><span>10题中答对${config.k}题，即可领取奖励。</span></li>
           </ol>
           </div>
@@ -156,7 +158,7 @@
     function resultScene() {
       const won = round.won(config.k);
       const scene = sceneFromHTML(resultMarkup(won, round.score), true);
-      scene.querySelector("button").addEventListener("click", beginRound);
+      scene.querySelector("button").addEventListener("click", returnToWelcome);
       return scene;
     }
 
@@ -200,6 +202,16 @@
       round = new Round(drawRound(scenarios));
       announcement.textContent = "新一轮开始，共 10 道题。";
       void transitionTo(questionScene(), "question");
+    }
+
+    function returnToWelcome() {
+      if (transitioning) return;
+      celebration.stop();
+      clearTimeout(advanceTimer);
+      advanceTimer = null;
+      round = null;
+      announcement.textContent = "已返回开始页，点击开始挑战开启新一轮。";
+      void transitionTo(welcomeScene(), "welcome");
     }
 
     function choose(model, button) {
