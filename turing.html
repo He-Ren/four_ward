@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f5ee" />
+    <meta name="description" content="读一段对话，猜猜回答来自 GPT、DeepSeek 还是豆包。4Ward 学生节图灵测试。" />
+    <title>图灵测试 · 4Ward</title>
+    <link rel="icon" href="assets/ui/favicon.png" type="image/png" />
+    <link rel="preload" href="assets/stickers/sticker_logo.png" as="image" />
+    <link rel="stylesheet" href="src/turing/styles.css?v=turing-3" />
+    <script defer src="src/turing/boot.js?v=turing-3"></script>
+  </head>
+  <body data-state="loading">
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="返回 4Ward 学生节小游戏主页">
+          <img class="brand-image" src="assets/stickers/sticker_logo.png" width="44" height="48" alt="" fetchpriority="high" />
+          <h1>图灵测试</h1>
+        </a>
+        <span class="event-name">4Ward <span>学生节</span></span>
+      </header>
+      <main class="game-layout" aria-label="图灵测试游戏">
+        <section class="progress-panel" aria-label="本轮答题情况">
+          <div class="progress-caption">
+            <span>本轮进度</span>
+            <span id="score-caption">共 10 题</span>
+          </div>
+          <div class="progress-track" id="progress-track">
+            <ol class="progress-grid" id="progress-grid" aria-label="10 道题的答题结果"></ol>
+            <div class="current-marker" id="current-marker" aria-hidden="true"></div>
+          </div>
+        </section>
+        <div class="stage" id="stage" aria-busy="true">
+          <section class="scene scene--full">
+            <div class="full-card loading-card">
+              <span class="loading-dot" aria-hidden="true"></span>
+              <h2>正在准备题目…</h2>
+              <p>读一段回答，认出它的作者。</p>
+            </div>
+          </section>
+        </div>
+        <p class="sr-only" id="announcement" role="status" aria-live="polite" aria-atomic="true"></p>
+      </main>
+      <noscript>请在浏览器中启用 JavaScript 后游玩。</noscript>
+    </div>
+  </body>
+</html>

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def main():
     commands = [
         [sys.executable, "scripts/package_merge.py", "--check"],
+        [sys.executable, "scripts/package_turing.py", "--check"],
         [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "*_test.py"],
         ["node", "--test", *[str(p.relative_to(ROOT)) for p in sorted((ROOT / "tests").glob("*.test.js"))]],
     ]

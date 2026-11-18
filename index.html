@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f7f5ee" />
     <meta
       name="description"
-      content="4Ward 学生节小游戏：合成小红帽。让相同的图形碰在一起，合成第九阶小红帽，向工作人员展示页面领奖。"
+      content="4Ward 学生节小游戏：合成小红帽、图灵测试。来玩一局，挑战成功后向工作人员展示页面领奖。"
     />
     <title>4Ward 学生节 · 小游戏</title>
     <link
@@ -15,7 +15,7 @@
       type="image/png"
       sizes="64x64"
     />
-    <link rel="stylesheet" href="src/home/styles.css" />
+    <link rel="stylesheet" href="src/home/styles.css?v=turing-3" />
   </head>
   <body>
     <div class="page">
@@ -55,6 +55,20 @@
             <a class="play-link" href="merge.html"
               >开始合成 <span aria-hidden="true">↗</span></a
             >
+          </div>
+        </article>
+        <article class="game-card turing-game-card" aria-labelledby="turing-title">
+          <div class="preview preview-turing" aria-hidden="true">
+            <span class="preview-circle"></span>
+            <span class="turing-question-mark">?</span>
+            <div class="turing-models"><span>GPT</span><span>DeepSeek</span><span>豆包</span></div>
+          </div>
+          <div class="game-info">
+            <p class="eyebrow">二选一挑战 · 手机 / 电脑均可玩</p>
+            <h2 id="turing-title">图灵测试</h2>
+            <p class="description">同样的问题，不同的语气。阅读一段真实的 AI 回答，猜猜它来自 GPT、DeepSeek 还是豆包。每轮 10 题，你能认出几位作者？</p>
+            <p class="reward">达到本轮正确题数要求后，将结果页面展示给工作人员，即可领取奖励。</p>
+            <a class="play-link" href="turing.html">开始挑战 <span aria-hidden="true">↗</span></a>
           </div>
         </article>
       </main>

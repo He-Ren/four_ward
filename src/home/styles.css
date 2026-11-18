@@ -155,6 +155,11 @@ h2 {
   outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
+.turing-game-card { margin-top: 28px; }
+.preview-turing { background: #e8ede7; }
+.turing-question-mark { position: relative; z-index: 1; font: 180px/1 Georgia, serif; color: var(--ink); transform: rotate(-9deg); margin-top: -30px; }
+.turing-models { position: absolute; bottom: 48px; display: flex; gap: 9px; z-index: 1; }
+.turing-models span { padding: 8px 12px; border: 1px solid #c5d1c1; border-radius: 20px; font-size: 12px; background: #fffdf8; }
 footer {
   padding-top: 32px;
   text-align: center;

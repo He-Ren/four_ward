@@ -1,4 +1,32 @@
-# 合成小红帽 · 4Ward 学生节
+# 4Ward 学生节小游戏
+
+## 图灵测试
+
+入口为 `turing.html`，主页也有入口。直接双击 HTML 即可玩，不需要安装包、联网或启动服务器；保持文件夹结构即可部署到 GitHub Pages。页面使用本地原生 HTML、CSS、JavaScript，没有运行时第三方依赖。
+
+每轮从 `assets/turing/scenarios.json` 抽取 10 道不同的题，每题随机选择 GPT、DeepSeek、豆包 Lite 三家中的一条回答，再随机选另一家作为干扰项并打乱两个按钮。题库里的 tag 不会展示。模型回答只渲染纯文本、换行和 `**加粗**`，不解析 HTML。
+
+每题只能作答一次。选中按钮和卡片边框显示答对/答错反馈，经过配置的秒数后自动切题；卡片和两个按钮作为整体从右侧进入、从左侧离开。开始、结果、再来一轮也使用同一过渡。顶部 2 行 × 5 列记录结果，当前题的边框平滑移动；开始和结果页不显示当前题边框。长回答在卡片内滚动，按钮始终留在下方。
+
+配置文件为 `config/turing/default.json`：
+
+| 参数 | 默认值 | 含义 |
+| --- | --- | --- |
+| `k` | `6` | 答对至少 k 题即获胜；0–10 的整数 |
+| `s` | `1.5` | 作答后自动切题前停留的秒数；0–60，可填小数 |
+
+在线模式直接加载 JSON，修改后刷新即可。也可用 `turing.html?config=./config/turing/another.json` 指定配置。双击模式使用生成的 `src/turing/offline-data.js`，修改配置或题库后运行一次：
+
+```sh
+python scripts/package_turing.py
+python scripts/package_turing.py --check
+```
+
+玩游戏的人不需要运行打包脚本。部署时保留 `turing.html`、`src/turing/`、`config/turing/`、`assets/turing/`、`assets/stickers/sticker_logo.png` 和 `assets/ui/favicon.png`；返回主页还需保留 `index.html` 及主页资源。更新脚本或样式时，同步修改 `turing.html` 中的 `v` 版本参数，子脚本会沿用该版本以避免手机使用旧缓存。系统开启“减少动态效果”时缩短过渡。
+
+逻辑和离线数据测试已接入 `python scripts/check.py`；单独运行逻辑测试可用 `node --test tests/turing.test.js`。
+
+## 合成小红帽
 
 纯前端合成小游戏。入口为 `merge.html`，业务代码、样式和类型位于 `src/merge/`。不需要 npm、不需要安装依赖、不需要联网，也不需要启动服务器。物理库已经作为本地文件随游戏提供。
 
