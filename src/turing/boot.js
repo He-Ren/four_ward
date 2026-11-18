@@ -61,6 +61,7 @@
       window.TuringData = { config, scenarios };
     }
     await loadScript("core.js");
+    await loadScript("confetti.js");
     await loadScript("main.js");
     window.TuringGame.start(window.TuringData);
   }

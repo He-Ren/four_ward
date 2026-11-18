@@ -4,6 +4,24 @@
   const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
   const CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
 
+  // Shared by the game and the local visual-review page.
+  function resultMarkup(won, score) {
+    if (typeof won !== "boolean" || !Number.isInteger(score) || score < 0 || score > QUESTION_COUNT) {
+      throw new Error("无效的本轮结果。");
+    }
+    return `
+        <div class="full-card result-card" data-won="${won}">
+          <div class="card-content result-content"><div class="result-body">
+          <p class="eyebrow">本轮挑战完成</p>
+          ${won ? '<span class="result-symbol" aria-hidden="true">✓</span>' : ""}
+          <h2 tabindex="-1">${won ? "恭喜！" : "就差一点！"}</h2>
+          <p class="result-score">你做对了<strong>${score}</strong>道题</p>
+          <p class="result-message">${won ? "请将此页面展示给工作人员领取奖励 🎉" : "再试一次吧"}</p>
+          </div></div>
+          <div class="card-actions"><button class="primary-button" id="play-again" type="button">再来一轮</button></div>
+        </div>`;
+  }
+
   function start(data) {
     const config = validateConfig(data?.config);
     const scenarios = validateScenarios(data?.scenarios);
@@ -13,6 +31,7 @@
     const track = document.getElementById("progress-track");
     const caption = document.getElementById("score-caption");
     const announcement = document.getElementById("announcement");
+    const celebration = window.TuringConfetti.createCelebration();
     let round = null;
     let currentScene = null;
     let transitioning = false;
@@ -136,17 +155,7 @@
 
     function resultScene() {
       const won = round.won(config.k);
-      const scene = sceneFromHTML(`
-        <div class="full-card result-card" data-won="${won}">
-          <div class="card-content result-content"><div class="result-body">
-          <p class="eyebrow">本轮挑战完成</p>
-          <span class="result-symbol" aria-hidden="true">${won ? "✓" : "↗"}</span>
-          <h2 tabindex="-1">${won ? "恭喜！" : "就差一点！"}</h2>
-          <p class="result-score">你做对了<strong>${round.score}</strong>道题</p>
-          <p class="result-message">${won ? "请将此页面展示给工作人员领取奖励" : "再试一次吧"}</p>
-          </div></div>
-          <div class="card-actions"><button class="primary-button" id="play-again" type="button">再来一轮</button></div>
-        </div>`, true);
+      const scene = sceneFromHTML(resultMarkup(won, round.score), true);
       scene.querySelector("button").addEventListener("click", beginRound);
       return scene;
     }
@@ -180,11 +189,13 @@
       currentScene = next;
       transitioning = false;
       document.body.dataset.state = state;
+      if (state === "result" && round.won(config.k)) celebration.start();
       next.querySelector("h2")?.focus({ preventScroll: true });
     }
 
     function beginRound() {
       if (transitioning) return;
+      celebration.stop();
       clearTimeout(advanceTimer);
       round = new Round(drawRound(scenarios));
       announcement.textContent = "新一轮开始，共 10 道题。";
@@ -222,5 +233,5 @@
     updateProgress();
   }
 
-  window.TuringGame = Object.freeze({ start });
+  window.TuringGame = Object.freeze({ start, resultMarkup });
 })();

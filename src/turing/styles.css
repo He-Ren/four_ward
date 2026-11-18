@@ -107,7 +107,7 @@ button:focus-visible, a:focus-visible, .conversation:focus-visible {
 .result-body { margin-block: auto; flex-shrink: 0; }
 .result-card .card-actions { margin-top: 18px; }
 .result-symbol { width: 54px; height: 54px; margin: 0 auto 24px; display: grid; place-items: center; border-radius: 50%; background: #e7eee0; color: var(--accent); font-size: 26px; }
-.result-card[data-won="false"] .result-symbol { color: #a17d55; background: #f3eadb; }
+.confetti-layer { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 30; pointer-events: none; }
 .result-score { margin: 12px 0 22px; font-size: 15px; color: var(--muted); }
 .result-score strong { display: block; margin: 8px 0; font: 80px/1.1 Georgia, serif; color: var(--ink); font-variant-numeric: tabular-nums; }
 .result-message { margin: 0; font-size: 15px; line-height: 1.9; }
